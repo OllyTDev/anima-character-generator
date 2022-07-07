@@ -1640,9 +1640,16 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
                 }
                 $.publish('data_loaded');
             }
+            const cb = document.querySelector('#OllyTCustomRules');
+            if (document.getElementById('OllyTCustomRules').checked){
+                alert("OllyTDev Rules enabled\n - Use of Ki now cost 0 MK");
+              }
+              document.getElementById('OllyTCustomRules').disabled=true;
             $('#load_dialog').modal('hide');
             return false;
         });
+    
+        
         $('#load_dialog').on('shown.bs.modal', function () {
             $('#load_text').focus();
         });
