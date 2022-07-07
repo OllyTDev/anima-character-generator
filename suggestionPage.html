@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Anima Character Sheet Generator Suggestion and bug reports</title>
+    <style>
+      div {
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Bug report</h2>
+    <form action="mailto:OllyTDev@gmail.com" method="get" enctype="application/x-www-form-urlencoded">
+      <div>
+        <label for="name">Bug summary:
+          <input type="text" name="name" id="name" />
+        </label>
+      </div>
+      <div>
+        <label for="email">Email (optional):
+          <input type="text" name="email" id="email" />
+        </label>
+      </div>
+      <div>
+        <label>What is happening?:</label>
+        <br />
+        <textarea name="CurrentBehaviour" rows="4" cols="120">Briefly describe what is happening...</textarea>
+      </div>
+      <div>
+        <label>How to recreate issue?:</label>
+        <br />
+        <textarea name="Recreation" rows="4" cols="120">Tell us step by step how to get this to happen - This will help significantly in resolving the issue.</textarea>
+      </div>
+      <div>
+        <label>What should happen instead?:</label>
+        <br />
+        <textarea name="CorrectBehaviour" rows="4" cols="120">Briefly tell us what should be happening instead...</textarea>
+      </div>
+      <div>   
+        <input type="submit" name="submit" value="Send" />
+        <input type="reset" name="reset" value="Clear Form" />
+      </div>
+    </form>
+  </body>
+</html>
