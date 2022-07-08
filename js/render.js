@@ -1058,43 +1058,52 @@ function ($, abilities, characters, essential_abilities, ki_abilities,
                 line = $('<div class="col-xs-12"></div>').html(content);
                 panel_body.append(line);
             }
-
-            // Okay, granted this code was written by me when I first came to the project.
+            
+            // This updates the cost of the modules based on your class. As this can only be done here when you know what class you are rather than in the dialogs
+            
+            // Granted this code was written by me when I first came to the project.
             // It was a copy and paste job, I was 23 and had been a professional dev for less than a year so...
+            
             // if the weaponsmaster dp shiz has been applied before, then don't add it.
             if (!modulesDPadded) {
                 // for each module in the modules list
-                // okay though this is where I first nearly had a fucing aneurysm
+                
+                // okay though this is where I first nearly had a fucking aneurysm
                 // It doesn't search through the list of modules using a known list
                 // it searches every name of every item defined ever. Primaries, ki abilities, magic EVERYTHING
                 // and then IF that name is found IN THE MODULES LIST DO SOME SHIT
                 // this was COPIED, I'll remind you, look below, you'll see how much they do this
-              for (name in modules) {
-                  if (modules.hasOwnProperty(name)) {
-                      module = modules[name];
-                      //creates the DP cost based on the weaponsmasterDP cost in the modules.js
-                      partsWM = ['<a href="#" class="add_module"><span class="name">',
+                for (name in modules) 
+                {
+                    if (modules.hasOwnProperty(name)) 
+                    {
+                        module = modules[name];
+                        //creates the DP cost based on the weaponsmasterDP cost in the modules.js
+                         partsWM = ['<a href="#" class="add_module"><span class="name">',
                                name, '</span></a> (<span class="weapsonscost">', module.WDP || module.DP,
                                '</span>)<br />'];
-                      //creates the DP cost based on the normal cost in the modules.js
-                      parts = ['<a href="#" class="add_module"><span class="name">',
+                        //creates the DP cost based on the normal cost in the modules.js
+                        parts = ['<a href="#" class="add_module"><span class="name">',
                                name, '</span></a> (<span class="cost">', module.DP,
                                '</span>)<br />'];
 
-                      primary = module.Primary;
-                      if (primary === 'Combat') {
-                          primary = 'Combat_Modules_' + ((i < 24) ? 1 : 2);
-                      }
-                      var data = characters.current();
-                      levels = data.levels;
-                      level = levels[0];
-                      //for the levels where your class is weaponsmaster
-                      if (level.Class === 'Weaponsmaster') {
-                        //add the render WITH weaponsmaster cost
-                        $('#' + primary).append(partsWM.join(''));
-                        modulesDPadded = true;
-                      }
-                      else {
+                        primary = module.Primary;
+                        if (primary === 'Combat') 
+                        {
+                            primary = 'Combat_Modules_' + ((i < 24) ? 1 : 2);
+                        }
+                        var data = characters.current();
+                        levels = data.levels;
+                        level = levels[0];
+                        //for the levels where your class is weaponsmaster
+                        if (level.Class === 'Weaponsmaster') 
+                        {
+                            //add the render WITH weaponsmaster cost
+                            $('#' + primary).append(partsWM.join(''));
+                            modulesDPadded = true;
+                        }
+                      else 
+                      {
                         //add the render of the normal DP cost
                         $('#' + primary).append(parts.join(''));
                         modulesDPadded = true;
@@ -1217,7 +1226,7 @@ function ($, abilities, characters, essential_abilities, ki_abilities,
 
             //see how much MK they have at this level
             availableMKatLevel = remaining_mk[i];
-            
+
             //Create the xxx MK spendable at this level text
             if (availableMKatLevel > 0) {
                 panel_body.append('<div class="clearfix"></div>');
