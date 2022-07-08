@@ -2069,7 +2069,7 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
             options,
             option_count,
             remaining = data.mk_remaining()[i] + 50, // Insufficient Martial Knowledge rule
-            requirements;
+            requirements;            
         for (name in ki_abilities) {
             if (ki_abilities.hasOwnProperty(name)) {
                 ability = ki_abilities[name];
@@ -2081,7 +2081,12 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
                     if (link.text() === name) {
                         link.removeClass('disabled');
                         link.data('level', level);
-                        if (ability.MK > remaining) {
+                        if (document.getElementById('OllyTCustomRules').checked){
+                            MK = ability.OTMK
+                        } else{
+                            MK = ability.MK
+                        }
+                        if (MK > remaining) {
                             link.addClass('disabled');
                         }
                         else if (data.has_ki_ability(name)) {

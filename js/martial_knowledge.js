@@ -70,9 +70,15 @@ define(['jquery', 'character', 'classes', 'ki_abilities', 'martial_arts'],
      * @param {String} [option] ny relevant parameter, such as an element type
      */
     Character.prototype.add_ki_ability = function (name, level, option) {
+        
         var index = (level === 0) ? 0 : level - 1,
-            ki_ability = ki_abilities[name],
-            cost = ki_ability.MK,
+            ki_ability = ki_abilities[name]
+        if (document.getElementById('OllyTCustomRules').checked){
+            MKWithRules = ki_ability.OTMK
+        } else{
+            MKWithRules = ki_ability.MK
+        }
+        var cost = MKWithRules,
             level_info = this.levels[index],
             mk = level_info.MK,
             remaining = this.mk_remaining()[index];
@@ -89,16 +95,21 @@ define(['jquery', 'character', 'classes', 'ki_abilities', 'martial_arts'],
             level_info.MK = mk;
         }
         if (name in mk) {
-            mk[name].MK += ki_ability.MK;
+            if (document.getElementById('OllyTCustomRules').checked){
+                MKWithRules = ki_ability.OTMK
+            } else{
+                MKWithRules = ki_ability.MK
+            }
+            mk[name].MK += MKWithRules;
             mk[name].Options.push(option);
             mk[name].Options.sort();
         }
         else {
             if (ki_ability.Option_Title) {
-                mk[name] = {MK: ki_ability.MK, Options: [option]};
+                mk[name] = {MK: MK, Options: [option]};
             }
             else {
-                mk[name] = ki_ability.MK;
+                mk[name] = MKWithRules;
             }
         }
         if (cost > remaining) {

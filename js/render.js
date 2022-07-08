@@ -924,17 +924,17 @@ function ($, abilities, characters, essential_abilities, ki_abilities,
             freelancer,
             i,
             j,
-            imbalances,
-            imk,
-            imk_name,
-            imk_tree,
+            magic_projection_imbalances,
+            insufficientMK,
+            insufficientMK_name,
+            insufficientMK_tree,
             level,
             levels,
             level_count,
             level_number,
             line,
             mk,
-            name,
+            moduleName,
             nb,
             panel,
             panel_body,
@@ -946,32 +946,64 @@ function ($, abilities, characters, essential_abilities, ki_abilities,
             technique,
             times_five = ['Magic Level', 'Martial Knowledge', 'Zeon'],
             withdrawn;
+
+        //Every comment from here on was written by OllyTDev, 
+        //I need some fellow coder to understand how little comments there were when I first came to this    
+        //I'm sorry, my sympathy for this code ran out long ago.
+
+        //prep to render an update to the level
         update_int('XP');
         data.update_level();
         remaining_mk = data.mk_remaining();
-        imk = data['Insufficient Martial Knowledge'];
-        if (imk) {
-            imk_name = imk.Name;
-            imk_tree = imk.Tree;
+        
+        //find the ki abilities which have been taken with insufficient martial knowledge
+        //This is rendered later on cus ya know, why not?
+        insufficientMK = data['Insufficient Martial Knowledge'];
+        if (insufficientMK) {
+            insufficientMK_name = insufficientMK.Name;
+            insufficientMK_tree = insufficientMK.Tree;
         }
+        //Get the info for the levels
         levels = data.levels;
+        //find out how many levels the character has
         level_count = levels.length;
         $('.level').remove();
-        imbalances = data.magic_projection_imbalances();
+
+        //check for magic_projection_imbalances
+        //again rendered below, not here - 
+        //I get not rendering it here but why gather this info now rather than gather it when you render it???
+        magic_projection_imbalances = data.magic_projection_imbalances();
+
+        //find out how much remaining dp they have (again at each level)
         remaining_dp = data.dp_remaining();
-        for (i = 0; i < level_count; i++) {
+        
+        //Right, go through each level and render EVERYTHING
+        //Rendering is done by repeatedly appending to a content variable with literal HTML and then rendering it all once we've got everything we need
+        //It's very 2010 js code.
+
+        for (i = 0; i < level_count; i++) 
+        {
             level = levels[i];
             remaining_dp_for_level = remaining_dp[i];
             //$('#levels').append($('<hr class="level" />'));
+            
+            //Create the little panel for each level, or at least the opening line for it
             panel = $('<div class="panel panel-default level"></div>');
+            
+            //then add the level number
             level_number = current_level === 0 ? 0 : i + 1;
             content = '<strong>Level ' + level_number + '</strong> (';
+            
+            //then add the class, if class change is possible, make it a hyperlink to the edit_class function
             if (data.class_change_possible(level_number)) {
                 content += '<a href="#" class="edit_class" data-level="' + level_number + '">' + level.Class + '</a>):';
             }
             else {
+                //otherwise just add the class as plain text
                 content += level.Class + '):';
             }
+
+            //then if the level is an even level, you can add a charactist bonus! Add the text and button to let the user do this
             if ((i + 1) % 2 === 0) {
                 content += ' <a href="#" class="characteristic_bonus" data-level="' + level_number + '">' + (('Characteristic' in level) ? level.Characteristic + ' +1' : 'Select characteristic bonus') + '</a>';
             }
@@ -979,42 +1011,71 @@ function ($, abilities, characters, essential_abilities, ki_abilities,
                 // manual JSON editing error?
                 delete level.Characteristic;
             }
+            //no else cus we really love just fucking with you.
+
+            //if you're not level 0 or don't have the with any natural bonus disadvantage,
+            //add the natural bonus text and button
+            //I want to remind you at this point, nothing has been rendered at all 
+            //we just have a variable called content which is just a string that's getting longer and longer
             if (level_number > 0 && !('Without any Natural Bonus' in data.Disadvantages)) {
                 nb = ('Natural Bonus' in level) ? level['Natural Bonus'] : null;
                 content += ' <a href="#" class="natural_bonus" data-level="' + level_number + '">' + (nb ? nb + ' +' + data.modifier(abilities[nb].Characteristic, level_number) : 'Select natural bonus') + '</a>';
             }
-            amount = imbalances[i];
+
+            //add the magic_projection_imbalances, originally just called imbalance cus there's no way that could be confusing.
+            amount = magic_projection_imbalances[i];
             if (typeof amount === 'number') {
                 content += ' <a href="#" class="mp_imbalance" data-level="' + level_number + '">Magic Projection Imbalance: ' + amount + '</a>';
             }
+
+            //literally this line add a line separator, I love this code so much
             line = $('<div class="panel-heading"></div>').html(content);
             panel.append(line);
+            
+            //Onto the main section of each level
+            //in the panel body
             panel_body = $('<div class="panel-body row"></div>');
+
+            //if you're a freelancer, add the little freelancer button
             if (level.Class === 'Freelancer') {
                 freelancer = level.Freelancer || [];
+                //add the text freelance bonuses:
                 content = 'Freelancer Bonuses:';
+                //see how many bonuses have already been added
                 count = freelancer.length;
                 parts = [];
+                
+                //add any bonuses already added by the user
                 for (j = 0; j < count; j++) {
                     parts.push(' <a href="#" class="freelancer_bonus" data-level="' + level_number + '">' + freelancer[j] + '</a>');
                 }
                 content += parts.join(',');
+                //if there's less than 5 bonuses added at this level
+                //display that lil plus button to add some more
                 if (count < 5) {
                     content += ' <a href="#" class="freelancer_bonus btn-xs" data-level="' + level_number + '"><i class="glyphicon glyphicon-plus"> </i></a>';
                 }
                 line = $('<div class="col-xs-12"></div>').html(content);
                 panel_body.append(line);
             }
+
+            // Okay, granted this code was written by me when I first came to the project.
+            // It was a copy and paste job, I was 23 and had been a professional dev for less than a year so...
+            // if the weaponsmaster dp shiz has been applied before, then don't add it.
             if (!modulesDPadded) {
-              for (name in modules) {
-                  if (modules.hasOwnProperty(name)) {
-                      module = modules[name];
+                //for each module in the modules list
+              for (moduleName in modules) {
+                  if (modules.hasOwnProperty(moduleName)) {
+                      module = modules[moduleName];
+                      //creates the DP cost based on the weaponsmasterDP cost in the modules.js
                       partsWM = ['<a href="#" class="add_module"><span class="name">',
-                               name, '</span></a> (<span class="weapsonscost">', module.WDP || module.DP,
+                               moduleName, '</span></a> (<span class="weapsonscost">', module.WDP || module.DP,
                                '</span>)<br />'];
+                      //creates the DP cost based on the normal cost in the modules.js
                       parts = ['<a href="#" class="add_module"><span class="name">',
-                               name, '</span></a> (<span class="cost">', module.DP,
+                               moduleName, '</span></a> (<span class="cost">', module.DP,
                                '</span>)<br />'];
+
                       primary = module.Primary;
                       if (primary === 'Combat') {
                           primary = 'Combat_Modules_' + ((i < 24) ? 1 : 2);
@@ -1022,11 +1083,14 @@ function ($, abilities, characters, essential_abilities, ki_abilities,
                       var data = characters.current();
                       levels = data.levels;
                       level = levels[0];
+                      //for the levels where your class is weaponsmaster
                       if (level.Class === 'Weaponsmaster') {
+                        //add the render WITH weaponsmaster cost
                         $('#' + primary).append(partsWM.join(''));
                         modulesDPadded = true;
                       }
                       else {
+                        //add the render of the normal DP cost
                         $('#' + primary).append(parts.join(''));
                         modulesDPadded = true;
                       }
@@ -1048,53 +1112,53 @@ function ($, abilities, characters, essential_abilities, ki_abilities,
             panel_body.append('<div class="col-xs-1"><strong>DP</strong></div>');
             parts = [];
             dp = level.DP;
-            for (name in dp) {
-                if (dp.hasOwnProperty(name)) {
-                    primary = primaries.for_ability(name);
-                    if (name.indexOf('Save ') === 0) {
-                        line = dp[name] + ' ' + primary + ' DP saved for later <span class="name" style="display: none;">' + name + '</span>';
+            for (moduleName in dp) {
+                if (dp.hasOwnProperty(moduleName)) {
+                    primary = primaries.for_ability(moduleName);
+                    if (moduleName.indexOf('Save ') === 0) {
+                        line = dp[moduleName] + ' ' + primary + ' DP saved for later <span class="name" style="display: none;">' + moduleName + '</span>';
                     }
-                    else if (name in martial_arts) {
-                        line = '<span class="name">' + name + '</span> (';
-                        line += dp[name].join(', ') + ')';
+                    else if (moduleName in martial_arts) {
+                        line = '<span class="name">' + moduleName + '</span> (';
+                        line += dp[moduleName].join(', ') + ')';
                     }
-                    else if (name in modules) {
-                        line = '<span class="name">' + name + '</span>';
-                        if (modules[name].Option_Title) {
-                            line += ' (' + dp[name].join(', ') + ')';
+                    else if (moduleName in modules) {
+                        line = '<span class="name">' + moduleName + '</span>';
+                        if (modules[moduleName].Option_Title) {
+                            line += ' (' + dp[moduleName].join(', ') + ')';
                         }
                     }
-                    else if (name === 'Accumulation Multiple' || name === 'Ki') {
+                    else if (moduleName === 'Accumulation Multiple' || moduleName === 'Ki') {
                         available = remaining_dp_for_level.Combat;
-                        for (characteristic in dp[name]) {
-                            if (dp[name].hasOwnProperty(characteristic)) {
-                                line = '<span class="name">' + name + '</span> (';
-                                line += characteristic + '): ' + dp[name][characteristic];
+                        for (characteristic in dp[moduleName]) {
+                            if (dp[moduleName].hasOwnProperty(characteristic)) {
+                                line = '<span class="name">' + moduleName + '</span> (';
+                                line += characteristic + '): ' + dp[moduleName][characteristic];
                                 parts.push('<a href="#" class="ability" data-available="' + available + '" data-level="' + level_number + '" data-characteristic="' + characteristic + '">' + line + '</a>');
                             }
                         }
                         continue;
                     }
-                    else if (name in powers) {
+                    else if (moduleName in powers) {
                         available = remaining_dp_for_level.Powers;
-                        line = '<span class="type">' + name + '</span>';
+                        line = '<span class="type">' + moduleName + '</span>';
                         parts.push('<a href="#" class="power" data-available="' + available + '" data-level="' + level_number + '">' + line + '</a>');
                         continue;
                     }
                     else {
-                        amount = dp[name];
-                        if ($.inArray(name, times_five) >= 0) {
+                        amount = dp[moduleName];
+                        if ($.inArray(moduleName, times_five) >= 0) {
                             amount *= 5;
                         }
-                        line = '<span class="name">' + name + '</span> (+' + amount + ')';
+                        line = '<span class="name">' + moduleName + '</span> (+' + amount + ')';
                     }
-                    if (name in remaining_dp_for_level) {
-                        available = remaining_dp_for_level[name];
+                    if (moduleName in remaining_dp_for_level) {
+                        available = remaining_dp_for_level[moduleName];
                     }
                     else {
                         available = remaining_dp_for_level[primary];
                     }
-                    if (name in ea_advantages || name in ea_disadvantages) {
+                    if (moduleName in ea_advantages || moduleName in ea_disadvantages) {
                         continue;
                     }
                     else {
@@ -1127,6 +1191,8 @@ function ($, abilities, characters, essential_abilities, ki_abilities,
             line = $('<div class="col-xs-11">' + content + '</div>');
             panel_body.append(line);
             available = remaining_mk[i];
+            
+            //Create the xxx MK spendable at this level text
             if (available > 0) {
                 panel_body.append('<div class="clearfix"></div>');
                 content = available + ' MK spendable at this level';
@@ -1137,16 +1203,16 @@ function ($, abilities, characters, essential_abilities, ki_abilities,
             panel_body.append('<div class="col-xs-1"><strong>MK</strong></div>');
             parts = [];
             mk = level.MK;
-            for (name in mk) {
-                if (mk.hasOwnProperty(name)) {
-                    if (name in ki_abilities) {
-                        line = '<span class="name">' + name + '</span>';
-                        if (ki_abilities[name].Option_Title) {
-                            line += ': <span class="options">' + mk[name].Options.join(', ') + '</span>';
+            for (moduleName in mk) {
+                if (mk.hasOwnProperty(moduleName)) {
+                    if (moduleName in ki_abilities) {
+                        line = '<span class="name">' + moduleName + '</span>';
+                        if (ki_abilities[moduleName].Option_Title) {
+                            line += ': <span class="options">' + mk[moduleName].Options.join(', ') + '</span>';
                         }
-                        if (imk_name === name && !imk_tree) {
+                        if (insufficientMK_name === moduleName && !insufficientMK_tree) {
                             line += ' (POW';
-                            amount = imk.Penalty;
+                            amount = insufficientMK.Penalty;
                             if (amount < 0) {
                                 line += ' ' + amount;
                             }
@@ -1156,13 +1222,13 @@ function ($, abilities, characters, essential_abilities, ki_abilities,
                     }
                     else {
                         // Technique Tree
-                        count = mk[name].length;
+                        count = mk[moduleName].length;
                         for (j = 0; j < count; j++) {
-                            technique = mk[name][j];
-                            line = '<span class="tree">' + name + '</span>: <span class="technique">' + technique.Name;
-                            if (imk_tree === name && imk_name === technique.Name) {
+                            technique = mk[moduleName][j];
+                            line = '<span class="tree">' + moduleName + '</span>: <span class="technique">' + technique.Name;
+                            if (insufficientMK_tree === moduleName && insufficientMK_name === technique.Name) {
                                 line += ' (POW';
-                                amount = imk.Penalty;
+                                amount = insufficientMK.Penalty;
                                 if (amount < 0) {
                                     line += ' ' + amount;
                                 }
@@ -1175,7 +1241,7 @@ function ($, abilities, characters, essential_abilities, ki_abilities,
                 }
             }
             content = parts.join(', ');
-            if (available >= 0 && !imk) {
+            if (available >= 0 && !insufficientMK) {
                 content += ' <a href="#" class="spend_mk btn-xs" data-level="' + level_number + '"><i class="glyphicon glyphicon-plus"> </i></a>';
             }
             line = $('<div class="col-xs-11">' + content + '</div>');
