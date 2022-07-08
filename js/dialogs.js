@@ -1643,8 +1643,8 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
             const cb = document.querySelector('#OllyTCustomRules');
             if (document.getElementById('OllyTCustomRules').checked){
                 alert("OllyTDev Rules enabled\n - Use of Ki now cost 0 MK");
-              }
-              document.getElementById('OllyTCustomRules').disabled=true;
+                }
+            document.getElementById('OllyTCustomRules').disabled=true;
             $('#load_dialog').modal('hide');
             return false;
         });
@@ -1662,12 +1662,12 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
         var ability,
             link,
             name,
-            uon = 'Use of Nemesis';
+            uon = 'Use of Nemesis';   
         for (name in ki_abilities) {
             if (ki_abilities.hasOwnProperty(name)) {
                 ability = ki_abilities[name];
                 link = ['<a href="#" class="add_ki_ability"><span class="name">',
-                        name, '</span></a> (', ability.MK, ')<br />'].join('');
+                        name, '</span></a> (<span class="cost"></span>)<br />'].join('');
                 if (name === uon || ('Requirements' in ability && $.inArray(uon, ability.Requirements) !== -1)) {
                     $('#Nemesis_Abilities').append(link);
                 }
@@ -2079,13 +2079,14 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
                 for (i = 0; i < count; i++) {
                     link = links.eq(i);
                     if (link.text() === name) {
-                        link.removeClass('disabled');
-                        link.data('level', level);
                         if (document.getElementById('OllyTCustomRules').checked){
                             MK = ability.OTMK
                         } else{
                             MK = ability.MK
                         }
+                        link.next('.cost').text(MK);
+                        link.removeClass('disabled');
+                        link.data('level', level);
                         if (MK > remaining) {
                             link.addClass('disabled');
                         }
