@@ -126,6 +126,9 @@ disadvantages, tables, utils) {
         if ('Category' in advantage) {
             cp_remaining += this.cp_remaining(advantage.Category);
         }
+        if (advantages[name].OllyTCost && document.getElementById('OllyTCustomRules').checked) {
+            cost = advantages[name].OllyTCost
+        }
         if ($.isArray(cost)) {
             if (cost[0] > cp_remaining) {
                 return false;

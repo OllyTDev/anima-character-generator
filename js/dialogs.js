@@ -1275,6 +1275,9 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
         if (category !== 'Common') {
             remaining += data.cp_remaining('Common');
         }
+        if (advantages[name].OllyTCost && document.getElementById('OllyTCustomRules').checked) {
+            options = advantages[name].OllyTCost
+        }
         $.each([1, 2, 3], function (i, cost) {
             if (cost > remaining || $.inArray(cost, options) === -1) {
                 $('.advantage_cost_' + cost).hide();
@@ -1642,7 +1645,7 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
             }
             const cb = document.querySelector('#OllyTCustomRules');
             if (document.getElementById('OllyTCustomRules').checked){
-                alert("OllyTDev Rules enabled\n - Use of Ki now cost 0 MK");
+                alert("OllyTDev Rules enabled\n - New advantage option: Familar 1\n - Use of Ki now cost 0 MK");
                 }
             document.getElementById('OllyTCustomRules').disabled=true;
             $('#load_dialog').modal('hide');
