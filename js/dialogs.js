@@ -1932,23 +1932,22 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
             new_ma_allowed = data.new_martial_art_allowed(level),
             parts,
             power,
-            primary,
+            DPSpendOptions,
             type;
         $('#Other a:contains("Life Point") .name').text(dr ? 'Life Points' : 'Life Point Multiple');
         for (catagoryName in DPSpendCategories) {
             console.log("name:",catagoryName)
             if (DPSpendCategories.hasOwnProperty(catagoryName)) {
                 available = limits[catagoryName === 'Other' ? 'Total' : catagoryName];
-                primary = DPSpendCategories[catagoryName];
-                count = primary.length;
+                DPSpendOptions = DPSpendCategories[catagoryName];
+                count = DPSpendOptions.length;
                 for (i = 0; i < count; i++) {
                     if (document.getElementById('OllyTCustomRules').checked && DPSpendCategories[catagoryName].OllyTRule){
-                        console.log(primary[i])
-                        ability = primary[i];
+                        console.log(DPSpendOptions[i])
+                        ability = DPSpendOptions[i];
                     } else{
-                        ability = primary[i];
+                        ability = DPSpendOptions[i];
                     }
-                    
                     links = $('#dp_tabs a:contains("' + ability + '")');
                     // Check for false matches like "Attack" & "Area Attack"
                     link_count = links.size();
