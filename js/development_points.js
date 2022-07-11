@@ -241,14 +241,14 @@ function ($, abilities, Character, classes, essential_abilities, martial_arts,
      * Get the cost in DP to the character of taking the specified ability
      * while in a particular class.
      * @method module:character#dp_cost
-     * @param {String} name The name of the ability
+     * @param {String} abiltyName The name of the ability
      * @param {String} class_name The name of the character's class when the
      *     ability is taken
      * @param {String} [degree] The degree of a martial art being taken
      * @returns {Number} The appropriate DP cost
      */
-    Character.prototype.dp_cost = function (name, class_name, degree) {
-        var ability = abilities[name],
+    Character.prototype.dp_cost = function (abiltyName, class_name, degree) {
+        var ability = abilities[abiltyName],
             character_class = classes[class_name],
             field,
             info,
@@ -257,30 +257,33 @@ function ($, abilities, Character, classes, essential_abilities, martial_arts,
             myAdvantages = this.Advantages,
             reduced,
             result;
-        if (name.indexOf('Save ') === 0) {
+        if(abiltyName == "Zeon Regeneration Multiple") {
+            console.log("Wow olly I found the fucking dickhead")
+        }
+        if (abiltyName.indexOf('Save ') === 0) {
             // Saving DP for later can be done in any quantity
             return 1;
         }
-        if (name in essentialAdvantages) {
-            return essentialAdvantages[name].DP;
+        if (abiltyName in essentialAdvantages) {
+            return essentialAdvantages[abiltyName].DP;
         }
-        if (name in essentialDisadvantages) {
-            return essentialDisadvantages[name].DP;
+        if (abiltyName in essentialDisadvantages) {
+            return essentialDisadvantages[abiltyName].DP;
         }
-        if (name in modules) {
+        if (abiltyName in modules) {
            if (class_name === 'Weaponsmaster') {
-             return (modules[name].WDP)
+             return (modules[abiltyName].WDP)
            }
            else {
-             return modules[name].DP;
+             return modules[abiltyName].DP;
            }
         }
-        if (name in martial_arts) {
-            info = martial_arts[name];
+        if (abiltyName in martial_arts) {
+            info = martial_arts[abiltyName];
             if ('Arcane' in info) {
                 return (class_name === 'Tao' ? 20 : 50);
             }
-            reduced = (name === this['First Martial Art']);
+            reduced = (abiltyName === this['First Martial Art']);
             if (class_name === 'Tao') {
                 if (degree === 'Supreme') {
                     return (reduced ? 10 : 20);
@@ -300,7 +303,7 @@ function ($, abilities, Character, classes, essential_abilities, martial_arts,
         if (ability) {
             field = ability.Field;
         }
-        reduced = character_class.reduced[name];
+        reduced = character_class.reduced[abiltyName];
         if (reduced) {
             result = reduced;
         }
@@ -308,15 +311,22 @@ function ($, abilities, Character, classes, essential_abilities, martial_arts,
             result = character_class[field];
         }
         else {
-            result = character_class[name];
+            result = character_class[abiltyName];
+            if(abiltyName == "Zeon Regeneration Multiple") {
+                console.log("result:" + result)
+            }
         }
         if (field) {
             if (myAdvantages['Aptitude in a Field'] === field) {
                 result--;
             }
             info = myAdvantages['Aptitude in a Subject'];
-            if (info && info.Ability === name) {
+            if (info && info.Ability === abiltyName) {
                 result -= info.Points;
+
+                console.log("name: ", abiltyName)
+                console.log("info.Points: ", info.Points)
+                console.log("result: ", result)
             }
         }
         if (result < 1) {
@@ -651,7 +661,7 @@ function ($, abilities, Character, classes, essential_abilities, martial_arts,
             required_gnosis = 15,
             type = this.Type;
         ability = (name in advantages) ? advantages[name] : disadvantages[name];
-        cost = ability.DP;
+        cost = ability.DP;        
         if (cost > dp_remaining) {
             return false;
         }

@@ -1921,7 +1921,7 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
             j,
             level = $(this).data('level'),
             index = level === 0 ? 0 : level - 1,
-            cls = data.levels[index].Class,
+            classAtLevel = data.levels[index].Class,
             remaining = data.dp_remaining(),
             limits = remaining[index],
             links,
@@ -1936,40 +1936,73 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
             type;
         $('#Other a:contains("Life Point") .name').text(dr ? 'Life Points' : 'Life Point Multiple');
         for (catagoryName in DPSpendCategories) {
-            console.log("name:",catagoryName)
             if (DPSpendCategories.hasOwnProperty(catagoryName)) {
                 available = limits[catagoryName === 'Other' ? 'Total' : catagoryName];
                 DPSpendOptions = DPSpendCategories[catagoryName];
-                count = DPSpendOptions.length;
-                for (i = 0; i < count; i++) {
-                    if (document.getElementById('OllyTCustomRules').checked && DPSpendCategories[catagoryName].OllyTRule){
+                DPSpendCount = DPSpendOptions.length;
+                for (i = 0; i < DPSpendCount; i++) {
+                    if (!document.getElementById('OllyTCustomRules').checked) {
                         console.log(DPSpendOptions[i])
                         ability = DPSpendOptions[i];
-                    } else{
+                        if (abilities.hasOwnProperty(ability)) {
+                            abilityCharacterists = abilities[ability]
+                            if (abilityCharacterists.hasOwnProperty('OllyTRule')) {
+                                OllyTAbility = true;
+                            } else {
+                                OllyTAbility = false;
+                            }
+                        } 
                         ability = DPSpendOptions[i];
-                    }
-                    links = $('#dp_tabs a:contains("' + ability + '")');
-                    // Check for false matches like "Attack" & "Area Attack"
-                    link_count = links.size();
-                    for (j = 0; j < link_count; j++) {
-                        link = links.eq(j);
-                        if (link.text() === ability) {
-                            cost = data.dp_cost(ability, cls);
-                            link.next('.cost').text(cost);
-                            cap = available;
-                            if (ability in limits) {
-                                cap = limits[ability];
+                        links = $('#dp_tabs a:contains("' + ability + '")');
+                        // Check for false matches like "Attack" & "Area Attack"
+                        link_count = links.size();
+                        for (j = 0; j < link_count; j++) {
+                            link = links.eq(j);
+                            if (link.text() === ability) {
+                                cost = data.dp_cost(ability, classAtLevel);
+                                link.next('.cost').text(cost);
+                                cap = available;
+                                if (ability in limits) {
+                                    cap = limits[ability];
+                                }
+                                link.data('available', cap);
+                                link.data('level', level);
+                                if (cost > cap) {
+                                    link.addClass('disabled');
+                                } else if (OllyTAbility == true) {
+                                    link.addClass('disabled');
+                                }
+                                else {
+                                    link.removeClass('disabled');
+                                }
                             }
-                            link.data('available', cap);
-                            link.data('level', level);
-                            if (cost > cap) {
-                                link.addClass('disabled');
-                            }
-                            else {
-                                link.removeClass('disabled');
+                        }
+                    } else {
+                        ability = DPSpendOptions[i];
+                        links = $('#dp_tabs a:contains("' + ability + '")');
+                        // Check for false matches like "Attack" & "Area Attack"
+                        link_count = links.size();
+                        for (j = 0; j < link_count; j++) {
+                            link = links.eq(j);
+                            if (link.text() === ability) {
+                                cost = data.dp_cost(ability, classAtLevel);
+                                link.next('.cost').text(cost);
+                                cap = available;
+                                if (ability in limits) {
+                                    cap = limits[ability];
+                                }
+                                link.data('available', cap);
+                                link.data('level', level);
+                                if (cost > cap) {
+                                    link.addClass('disabled');
+                                }
+                                else {
+                                    link.removeClass('disabled');
+                                }
                             }
                         }
                     }
+                    
                 }
             }
         }
@@ -2005,7 +2038,7 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
                     degree = 'Advanced';
                 }
             }
-            cost = data.dp_cost(catagoryName, cls, degree);
+            cost = data.dp_cost(catagoryName, classAtLevel, degree);
             if (cost <= available && data.martial_art_allowed(catagoryName, degree, level) && (new_ma_allowed || degree !== 'Base')) {
                 parts = ['<a href="#" class="add_martial_art" data-level="',
                          level, '"><span class="name">', catagoryName,
