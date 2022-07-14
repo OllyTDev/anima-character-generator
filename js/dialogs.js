@@ -98,7 +98,6 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
         edit_freelancer_bonus,
         edit_mp_imbalance,
         edit_natural_bonus,
-        freelancer_init,
         ki_ability_options_init,
         ki_characteristic_init,
         load,
@@ -1459,12 +1458,17 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
      * Configure and launch the dialog for selecting which Secondary Ability to
      * put a Freelancer bonus into.
      */
+    var freelancerDialogCreated = false;
+
     edit_freelancer_bonus = function () {
         var data = characters.current(),
             link = $(this),
             level = parseInt(link.data('level'), 10),
             level_info = data.level_info(level),
+            DPSpendOptions,
             bonuses = level_info.Freelancer,
+            other = DPSpendCategories.Other,
+            count = other.length,
             name = link.text();
         if (name === '+') {
             name = '';
@@ -1480,8 +1484,40 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
                 link.removeClass('disabled');
             }
         });
+        
+        if (!freelancerDialogCreated) {
+            for (i = 0; i < count; i++) {
+                ability = other[i];
+                if (!document.getElementById('OllyTCustomRules').checked) {
+                    DPSpendOptions = DPSpendCategories["Other"];
+                    cAbility = DPSpendOptions[i];
+                    if (abilities.hasOwnProperty(cAbility)) {
+                        abilityCharacterists = abilities[cAbility]
+                        if (abilityCharacterists.hasOwnProperty('OllyTRule')) {
+                            console.log("Skipping ", cAbility)
+                        } else {
+                            parts = ['<a href="#" class="freelancer">', ability, '</a><br />'];
+
+                            if (ability in abilities && 'Field' in abilities[ability]) {
+                                $('#Freelancer_' + abilities[ability].Field).append(parts.join(''));
+                            }
+                        }
+                    } 
+                }  else {
+                    parts = ['<a href="#" class="freelancer">', ability, '</a><br />'];
+    
+                    if (ability in abilities && 'Field' in abilities[ability]) {
+                        $('#Freelancer_' + abilities[ability].Field).append(parts.join(''));
+                    }
+                }
+            } 
+            create_dialog('freelancer_dialog', 'Add Freelancer bonus to...',
+                          'Cancel');
+            freelancerDialogCreated = true;            
+        }
+
         $('#freelancer_dialog').modal('show');
-        return false;
+        return false;      
     };
 
     /**
@@ -1560,28 +1596,6 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
     };
 
     /**
-     * Initialize the dialog for selecting a Secondary Ability to put a
-     * Freelancer bonus into.
-     */
-    freelancer_init = function () {
-        var ability,
-            i,
-            other = DPSpendCategories.Other,
-            count = other.length,
-            parts;
-        for (i = 0; i < count; i++) {
-            ability = other[i];
-            parts = ['<a href="#" class="freelancer">', ability, '</a><br />'];
-            if (ability in abilities && 'Field' in abilities[ability]) {
-                $('#Freelancer_' + abilities[ability].Field).append(parts.join(''));
-            }
-        }
-        create_dialog('freelancer_dialog', 'Add Freelancer bonus to...',
-                      'Cancel');
-
-    };
-
-    /**
      * Initialize the dialog for selecting Ki Ability parameters.
      */
     ki_ability_options_init = function () {
@@ -1643,7 +1657,6 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
                 }
                 $.publish('data_loaded');
             }
-            const cb = document.querySelector('#OllyTCustomRules');
             if (document.getElementById('OllyTCustomRules').checked){
                 alert("OllyTDev Rules enabled\n - New advantage option: Familar 1\n - Use of Ki now cost 0 MK\n - Cookery secondary ability now available");
                 }
@@ -2243,7 +2256,6 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
         ea_advantages_init();
         ea_disadvantages_init();
         ea_option_init();
-        freelancer_init();
         ki_ability_options_init();
         ki_characteristic_init();
         load_character_init();
