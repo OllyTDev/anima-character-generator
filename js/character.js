@@ -658,7 +658,6 @@ cultural_roots, disciplines, essential_abilities, tables, utils) {
      */
     Character.prototype.life_points = function () {
         var cls,
-            con_mod = this.modifier('CON'),
             hard_to_kill = this.Advantages['Hard to Kill'],
             i,
             info,
@@ -678,7 +677,7 @@ cultural_roots, disciplines, essential_abilities, tables, utils) {
             }
             multiple = info.DP['Life Point Multiple'];
             if (multiple) {
-                result += multiple * con_mod;
+                result += multiple * this.characteristic('CON');
             }
             // Damage Resistance
             multiple = info.DP['Life Points'];
@@ -834,8 +833,8 @@ cultural_roots, disciplines, essential_abilities, tables, utils) {
      */
     Character.prototype.size = function () {
         var total = this.characteristic('STR') + this.characteristic('CON'),
-            uncommon_size = this.Advantages['Uncommon Size'],
-            unnatural_size = this.levels[0].DP['Unnatural Size'];
+            uncommon_size = Number(this.Advantages['Uncommon Size']),
+            unnatural_size = Number(this.levels[0].DP['Unnatural Size']);
         switch (this.Race) {
         case 'Daimah Nephilim':
             total -= 1;
