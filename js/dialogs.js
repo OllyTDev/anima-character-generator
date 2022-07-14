@@ -36,7 +36,6 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
           DPSpendCategories, tables, widgets) {
 
     const psychicDisciplines = getPsychicDisciplines(psychic_disciplines.disciplines);
-    console.log("psychicDisciplines: ", psychicDisciplines)        
 
     var ability_dp_init,
         add_advantage,
@@ -1955,7 +1954,6 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
                 DPSpendCount = DPSpendOptions.length;
                 for (i = 0; i < DPSpendCount; i++) {
                     if (!document.getElementById('OllyTCustomRules').checked) {
-                        console.log(DPSpendOptions[i])
                         ability = DPSpendOptions[i];
                         if (abilities.hasOwnProperty(ability)) {
                             abilityCharacterists = abilities[ability]
