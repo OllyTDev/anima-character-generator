@@ -16,6 +16,7 @@
 <body>
 <form id="main_form" action="javascript:void(0);" role="form" class="form-horizontal">
 <div class="container">
+  
   <div><strong><span class="summary"> </span></strong>&nbsp;&nbsp;&nbsp;&nbsp;<span class="Gnosis"> </span></div>
 
   <div class="row">
@@ -166,6 +167,19 @@
         <button id="proceed" type="button" class="btn btn-primary">Proceed</button>
         <button id="save_button" type="button" class="btn btn-default">Save</button>
         <button id="load_button" type="button" class="btn btn-default">Load</button>
+        <label for="OllyTCustomRules">
+          <input type="checkbox" id="OllyTCustomRules" name="OllyTCustomRules">  Enable OllyT Custom Rules 
+        </label>
+        <script>
+          const cb = document.querySelector('#OllyTCustomRules');
+          const btn = document.querySelector('#proceed');
+          btn.onclick = () => {
+            if (document.getElementById('OllyTCustomRules').checked){
+              alert("OllyTDev Rules enabled\n - New advantage option: Familar 1\n - Use of Ki now cost 0 MK\n - Cookery secondary ability now available");
+            }
+            document.getElementById('OllyTCustomRules').disabled=true;
+          };
+        </script>
       </div>
     </div>
     

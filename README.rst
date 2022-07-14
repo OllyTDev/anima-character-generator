@@ -105,3 +105,14 @@ Planned stuff:
 * Point counter for psychic point spend
 * Info boxes with what each ability does
 * React Library refactoring
+
+Code notes:
+
+If you're a fellow developer attempting to make changes to this code yourself, here are some notes for looking through the code.
+
+* All number for costs are stored in the individually named files and these are the numbers used for the calculations - for example, ki abilities are in the ki_abilities.js file, modules are in the modules.js file.
+* HOWEVER anything displayed to the user is stored either in the index.html, dialogs.js if it's in a popup dialog box or in the render.js for the menu selection.
+* This means that a change for a specific value needs changing in multiple places, once in the js storing all the info and once in the appropriate renders to display this to the user.
+
+----------
+

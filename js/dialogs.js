@@ -33,7 +33,7 @@ define(['jquery', 'abilities', 'advantages', 'characters', 'cultural_roots',
 'libs/utils', 'pubsub' ],
 function ($, abilities, advantages, characters, cultural_roots, disadvantages,
           essential_abilities, ki_abilities, psychic_disciplines, martial_arts, modules, powers,
-          primaries, tables, widgets) {
+          DPSpendCategories, tables, widgets) {
 
     const psychicDisciplines = getPsychicDisciplines(psychic_disciplines.disciplines);
     console.log("psychicDisciplines: ", psychicDisciplines)        
@@ -98,7 +98,6 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
         edit_freelancer_bonus,
         edit_mp_imbalance,
         edit_natural_bonus,
-        freelancer_init,
         ki_ability_options_init,
         ki_characteristic_init,
         load,
@@ -1148,9 +1147,9 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
             parts,
             power,
             primary;
-        for (name in primaries) {
-            if (primaries.hasOwnProperty(name)) {
-                primary = primaries[name];
+        for (name in DPSpendCategories) {
+            if (DPSpendCategories.hasOwnProperty(name)) {
+                primary = DPSpendCategories[name];
                 count = primary.length;
                 for (i = 0; i < count; i++) {
                     ability = primary[i];
@@ -1274,6 +1273,9 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
         $('#advantage_cost_name').val(name);
         if (category !== 'Common') {
             remaining += data.cp_remaining('Common');
+        }
+        if (advantages[name].OllyTCost && document.getElementById('OllyTCustomRules').checked) {
+            options = advantages[name].OllyTCost
         }
         $.each([1, 2, 3], function (i, cost) {
             if (cost > remaining || $.inArray(cost, options) === -1) {
@@ -1456,12 +1458,17 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
      * Configure and launch the dialog for selecting which Secondary Ability to
      * put a Freelancer bonus into.
      */
+    var freelancerDialogCreated = false;
+
     edit_freelancer_bonus = function () {
         var data = characters.current(),
             link = $(this),
             level = parseInt(link.data('level'), 10),
             level_info = data.level_info(level),
+            DPSpendOptions,
             bonuses = level_info.Freelancer,
+            other = DPSpendCategories.Other,
+            count = other.length,
             name = link.text();
         if (name === '+') {
             name = '';
@@ -1477,8 +1484,40 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
                 link.removeClass('disabled');
             }
         });
+        
+        if (!freelancerDialogCreated) {
+            for (i = 0; i < count; i++) {
+                ability = other[i];
+                if (!document.getElementById('OllyTCustomRules').checked) {
+                    DPSpendOptions = DPSpendCategories["Other"];
+                    cAbility = DPSpendOptions[i];
+                    if (abilities.hasOwnProperty(cAbility)) {
+                        abilityCharacterists = abilities[cAbility]
+                        if (abilityCharacterists.hasOwnProperty('OllyTRule')) {
+                            console.log("Skipping ", cAbility)
+                        } else {
+                            parts = ['<a href="#" class="freelancer">', ability, '</a><br />'];
+
+                            if (ability in abilities && 'Field' in abilities[ability]) {
+                                $('#Freelancer_' + abilities[ability].Field).append(parts.join(''));
+                            }
+                        }
+                    } 
+                }  else {
+                    parts = ['<a href="#" class="freelancer">', ability, '</a><br />'];
+    
+                    if (ability in abilities && 'Field' in abilities[ability]) {
+                        $('#Freelancer_' + abilities[ability].Field).append(parts.join(''));
+                    }
+                }
+            } 
+            create_dialog('freelancer_dialog', 'Add Freelancer bonus to...',
+                          'Cancel');
+            freelancerDialogCreated = true;            
+        }
+
         $('#freelancer_dialog').modal('show');
-        return false;
+        return false;      
     };
 
     /**
@@ -1557,28 +1596,6 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
     };
 
     /**
-     * Initialize the dialog for selecting a Secondary Ability to put a
-     * Freelancer bonus into.
-     */
-    freelancer_init = function () {
-        var ability,
-            i,
-            other = primaries.Other,
-            count = other.length,
-            parts;
-        for (i = 0; i < count; i++) {
-            ability = other[i];
-            parts = ['<a href="#" class="freelancer">', ability, '</a><br />'];
-            if (ability in abilities && 'Field' in abilities[ability]) {
-                $('#Freelancer_' + abilities[ability].Field).append(parts.join(''));
-            }
-        }
-        create_dialog('freelancer_dialog', 'Add Freelancer bonus to...',
-                      'Cancel');
-
-    };
-
-    /**
      * Initialize the dialog for selecting Ki Ability parameters.
      */
     ki_ability_options_init = function () {
@@ -1640,9 +1657,15 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
                 }
                 $.publish('data_loaded');
             }
+            if (document.getElementById('OllyTCustomRules').checked){
+                alert("OllyTDev Rules enabled\n - New advantage option: Familar 1\n - Use of Ki now cost 0 MK\n - Cookery secondary ability now available");
+                }
+            document.getElementById('OllyTCustomRules').disabled=true;
             $('#load_dialog').modal('hide');
             return false;
         });
+    
+        
         $('#load_dialog').on('shown.bs.modal', function () {
             $('#load_text').focus();
         });
@@ -1655,12 +1678,12 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
         var ability,
             link,
             name,
-            uon = 'Use of Nemesis';
+            uon = 'Use of Nemesis';   
         for (name in ki_abilities) {
             if (ki_abilities.hasOwnProperty(name)) {
                 ability = ki_abilities[name];
                 link = ['<a href="#" class="add_ki_ability"><span class="name">',
-                        name, '</span></a> (', ability.MK, ')<br />'].join('');
+                        name, '</span></a> (<span class="cost"></span>)<br />'].join('');
                 if (name === uon || ('Requirements' in ability && $.inArray(uon, ability.Requirements) !== -1)) {
                     $('#Nemesis_Abilities').append(link);
                 }
@@ -1821,7 +1844,7 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
         $('#ability_level').val(level);
         $('#ability_limit').text('' + max);
         if (name.indexOf('Save ') === 0) {
-            $('#ability_primary').text(primaries.for_ability(name));
+            $('#ability_primary').text(DPSpendCategories.for_ability(name));
             $('#ability_spend').hide();
             $('#ability_save').show();
         }
@@ -1911,49 +1934,88 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
             j,
             level = $(this).data('level'),
             index = level === 0 ? 0 : level - 1,
-            cls = data.levels[index].Class,
+            classAtLevel = data.levels[index].Class,
             remaining = data.dp_remaining(),
             limits = remaining[index],
             links,
             link_count,
             link,
-            name,
+            catagoryName,
             names,
             new_ma_allowed = data.new_martial_art_allowed(level),
             parts,
             power,
-            primary,
+            DPSpendOptions,
             type;
         $('#Other a:contains("Life Point") .name').text(dr ? 'Life Points' : 'Life Point Multiple');
-        for (name in primaries) {
-            if (primaries.hasOwnProperty(name)) {
-                available = limits[name === 'Other' ? 'Total' : name];
-                primary = primaries[name];
-                count = primary.length;
-                for (i = 0; i < count; i++) {
-                    ability = primary[i];
-                    links = $('#dp_tabs a:contains("' + ability + '")');
-                    // Check for false matches like "Attack" & "Area Attack"
-                    link_count = links.size();
-                    for (j = 0; j < link_count; j++) {
-                        link = links.eq(j);
-                        if (link.text() === ability) {
-                            cost = data.dp_cost(ability, cls);
-                            link.next('.cost').text(cost);
-                            cap = available;
-                            if (ability in limits) {
-                                cap = limits[ability];
+        for (catagoryName in DPSpendCategories) {
+            if (DPSpendCategories.hasOwnProperty(catagoryName)) {
+                available = limits[catagoryName === 'Other' ? 'Total' : catagoryName];
+                DPSpendOptions = DPSpendCategories[catagoryName];
+                DPSpendCount = DPSpendOptions.length;
+                for (i = 0; i < DPSpendCount; i++) {
+                    if (!document.getElementById('OllyTCustomRules').checked) {
+                        console.log(DPSpendOptions[i])
+                        ability = DPSpendOptions[i];
+                        if (abilities.hasOwnProperty(ability)) {
+                            abilityCharacterists = abilities[ability]
+                            if (abilityCharacterists.hasOwnProperty('OllyTRule')) {
+                                OllyTAbility = true;
+                            } else {
+                                OllyTAbility = false;
                             }
-                            link.data('available', cap);
-                            link.data('level', level);
-                            if (cost > cap) {
-                                link.addClass('disabled');
+                        } 
+                        ability = DPSpendOptions[i];
+                        links = $('#dp_tabs a:contains("' + ability + '")');
+                        // Check for false matches like "Attack" & "Area Attack"
+                        link_count = links.size();
+                        for (j = 0; j < link_count; j++) {
+                            link = links.eq(j);
+                            if (link.text() === ability) {
+                                cost = data.dp_cost(ability, classAtLevel);
+                                link.next('.cost').text(cost);
+                                cap = available;
+                                if (ability in limits) {
+                                    cap = limits[ability];
+                                }
+                                link.data('available', cap);
+                                link.data('level', level);
+                                if (cost > cap) {
+                                    link.addClass('disabled');
+                                } else if (OllyTAbility == true) {
+                                    link.addClass('disabled');
+                                }
+                                else {
+                                    link.removeClass('disabled');
+                                }
                             }
-                            else {
-                                link.removeClass('disabled');
+                        }
+                    } else {
+                        ability = DPSpendOptions[i];
+                        links = $('#dp_tabs a:contains("' + ability + '")');
+                        // Check for false matches like "Attack" & "Area Attack"
+                        link_count = links.size();
+                        for (j = 0; j < link_count; j++) {
+                            link = links.eq(j);
+                            if (link.text() === ability) {
+                                cost = data.dp_cost(ability, classAtLevel);
+                                link.next('.cost').text(cost);
+                                cap = available;
+                                if (ability in limits) {
+                                    cap = limits[ability];
+                                }
+                                link.data('available', cap);
+                                link.data('level', level);
+                                if (cost > cap) {
+                                    link.addClass('disabled');
+                                }
+                                else {
+                                    link.removeClass('disabled');
+                                }
                             }
                         }
                     }
+                    
                 }
             }
         }
@@ -1964,18 +2026,18 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
         $('#Basic_Martial_Arts').html('');
         $('#Advanced_Martial_Arts').html('');
         for (i = 0; i < count; i++) {
-            name = names[i];
-            art = martial_arts[name];
+            catagoryName = names[i];
+            art = martial_arts[catagoryName];
             type = ('Supreme' in art ? 'Basic' : 'Advanced');
-            if (!(name in arts)) {
+            if (!(catagoryName in arts)) {
                 // Haven't started it yet
                 degree = 'Base';
             }
             else {
-                degree = arts[name].Degree;
+                degree = arts[catagoryName].Degree;
                 if (degree === 'Supreme' || degree === 'Arcane') {
                     // Already done with it
-                    $('#' + type + '_Martial_Arts').append(name + '<br />');
+                    $('#' + type + '_Martial_Arts').append(catagoryName + '<br />');
                     continue;
                 }
                 if (type === 'Advanced') {
@@ -1989,28 +2051,28 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
                     degree = 'Advanced';
                 }
             }
-            cost = data.dp_cost(name, cls, degree);
-            if (cost <= available && data.martial_art_allowed(name, degree, level) && (new_ma_allowed || degree !== 'Base')) {
+            cost = data.dp_cost(catagoryName, classAtLevel, degree);
+            if (cost <= available && data.martial_art_allowed(catagoryName, degree, level) && (new_ma_allowed || degree !== 'Base')) {
                 parts = ['<a href="#" class="add_martial_art" data-level="',
-                         level, '"><span class="name">', name,
+                         level, '"><span class="name">', catagoryName,
                          '</span> [<span class="degree">', degree,
                          '</span>]</a> (', cost, ')<br />'];
             }
             else {
-                parts = [name, ' [', degree, '] (', cost, ')<br />'];
+                parts = [catagoryName, ' [', degree, '] (', cost, ')<br />'];
             }
             $('#' + type + '_Martial_Arts').append(parts.join(''));
         }
-        for (name in modules) {
-            if (modules.hasOwnProperty(name)) {
-                ability = modules[name];
+        for (catagoryName in modules) {
+            if (modules.hasOwnProperty(catagoryName)) {
+                ability = modules[catagoryName];
                 available = limits[ability.Primary];
-                links = $('#dp_tabs a:contains("' + name + '")');
+                links = $('#dp_tabs a:contains("' + catagoryName + '")');
                 // Check for false matches like "Attack" & "Area Attack"
                 link_count = links.size();
                 for (i = 0; i < link_count; i++) {
                     link = links.eq(i);
-                    if (link.text() === name) {
+                    if (link.text() === catagoryName) {
                         cost = ability.DP;
                         link.next('.cost').text(cost);
                         link.data('available', available);
@@ -2025,12 +2087,12 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
                 }
             }
         }
-        for (name in powers) {
-            if (powers.hasOwnProperty(name)) {
-                power = powers[name];
+        for (catagoryName in powers) {
+            if (powers.hasOwnProperty(catagoryName)) {
+                power = powers[catagoryName];
                 available = limits.Powers;
-                link = $('#dp_tabs a:contains("' + name + '")');
-                cost = data.power_upgrade_cost(name, level);
+                link = $('#dp_tabs a:contains("' + catagoryName + '")');
+                cost = data.power_upgrade_cost(catagoryName, level);
                 link.next('.cost').text(cost === 0 ? 'N/A' : cost);
                 link.data('available', available);
                 link.data('level', level);
@@ -2062,7 +2124,7 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
             options,
             option_count,
             remaining = data.mk_remaining()[i] + 50, // Insufficient Martial Knowledge rule
-            requirements;
+            requirements;            
         for (name in ki_abilities) {
             if (ki_abilities.hasOwnProperty(name)) {
                 ability = ki_abilities[name];
@@ -2072,9 +2134,15 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
                 for (i = 0; i < count; i++) {
                     link = links.eq(i);
                     if (link.text() === name) {
+                        if (document.getElementById('OllyTCustomRules').checked){
+                            MK = ability.OTMK
+                        } else{
+                            MK = ability.MK
+                        }
+                        link.next('.cost').text(MK);
                         link.removeClass('disabled');
                         link.data('level', level);
-                        if (ability.MK > remaining) {
+                        if (MK > remaining) {
                             link.addClass('disabled');
                         }
                         else if (data.has_ki_ability(name)) {
@@ -2188,7 +2256,6 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
         ea_advantages_init();
         ea_disadvantages_init();
         ea_option_init();
-        freelancer_init();
         ki_ability_options_init();
         ki_characteristic_init();
         load_character_init();

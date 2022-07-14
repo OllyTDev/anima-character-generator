@@ -44,7 +44,7 @@ define(['jquery', 'abilities', 'magic_paths',  'psychic_disciplines',
         'Exceptional Psychic Resistance': {Cost: [1, 2]},  // +25 to PsR , +50 to PsR
         'Extreme Concentration': {Category: 'Psychic', Cost: 2},  // doubles the bonus for concentrating
         Fame: {Category: 'Background', Cost: [1, 2]},
-        Familiar: {Cost: [1, 2, 3]},
+        Familiar: {Cost: [2, 3], OllyTCost: [1, 2, 3]},
         Focus: {Category: 'Psychic', Cost: 1}, // psychic points spent to boost projection are +20 instead of +10
         Fortunate: {Cost: 1},
         'Free Access to Any Psychic Discipline': {Cost: 2},
