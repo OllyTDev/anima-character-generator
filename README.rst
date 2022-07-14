@@ -97,6 +97,9 @@ Fixes and additions so far:
 * Added addition gender options
 * Added total to primaries for point spend method 5 found in the GM toolkit
 * 'Access to Natural Psychic Powers' advantage now includes a list of the powers you can add
+* Fixed life point multiple - Credit @drknotter
+* Fixed unnatural size calculation - Credit @drknotter
+* Additon of OllyTRules which adds cookery as a secondary ability, use of ki for 0MK and familiar 1 as an optional advantage
 
 Planned stuff:
 
