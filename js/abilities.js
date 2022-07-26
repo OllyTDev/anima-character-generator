@@ -65,5 +65,5 @@ define({
     Tactics: {Field: 'Intellectual', Characteristic: 'INT'},
     Composure: {Field: 'Vigor', Characteristic: 'WP', passive: true},
     'Feats of Strength': {Field: 'Vigor', Characteristic: 'STR'},
-    'Withstand Pain': {Field: 'Vigor', Characteristic: 'WP'},
+    'Withstand Pain': {Field: 'Vigor', Characteristic: 'WP'}
 });
