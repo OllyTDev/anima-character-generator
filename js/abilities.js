@@ -32,6 +32,7 @@ define({
     Runes: {Field: 'Creative', Characteristic: 'DEX'},
     'Sleight of Hand': {Field: 'Creative', Characteristic: 'DEX', specializations: ['Juggling', 'Prestidigitation', 'Reloading']},
     Tailoring: {Field: 'Creative', Characteristic: 'DEX'},
+    Insight: {Field: 'Perceptive', Characteristic: 'POW', OllyTRule: true},
     Notice: {Field: 'Perceptive', Characteristic: 'PER', passive: true},
     Search: {Field: 'Perceptive', Characteristic: 'PER'},
     Track: {Field: 'Perceptive', Characteristic: 'PER'},
@@ -50,6 +51,7 @@ define({
     Stealth: {Field: 'Subterfuge', Characteristic: 'AGI'},
     'Trap Lore': {Field: 'Subterfuge', Characteristic: 'DEX'},
     Animals: {Field: 'Intellectual', Characteristic: 'INT', knowledge: true, specializations: ['Bears', 'Cats', 'Dogs', 'Horses', 'Lions', 'Tigers', 'Wolves']},
+    Agriculture: {Field: 'Intellectual', Characteristic: 'INT', OllyTRule: true},
     Appraisal: {Field: 'Intellectual', Characteristic: 'INT', knowledge: true},
     'Herbal Lore': {Field: 'Intellectual', Characteristic: 'INT', knowledge: true},
     History: {Field: 'Intellectual', Characteristic: 'INT', knowledge: true, specializations: ['Christian', 'Local']},
@@ -63,5 +65,5 @@ define({
     Tactics: {Field: 'Intellectual', Characteristic: 'INT'},
     Composure: {Field: 'Vigor', Characteristic: 'WP', passive: true},
     'Feats of Strength': {Field: 'Vigor', Characteristic: 'STR'},
-    'Withstand Pain': {Field: 'Vigor', Characteristic: 'WP'}
+    'Withstand Pain': {Field: 'Vigor', Characteristic: 'WP'},
 });
