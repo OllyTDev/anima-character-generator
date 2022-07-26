@@ -1656,8 +1656,9 @@ function ($, abilities, advantages, characters, cultural_roots, disadvantages,
                 }
                 $.publish('data_loaded');
             }
+            
             if (document.getElementById('OllyTCustomRules').checked){
-                alert("OllyTDev Rules enabled\n - New advantage option: Familar 1\n - Use of Ki now cost 0 MK\n - Cookery secondary ability now available");
+                alert("OllyTDev Rules enabled\n - New advantage option: Familar 1\n - Use of Ki now cost 0 MK\n - New secondary abilities now available");
                 }
             document.getElementById('OllyTCustomRules').disabled=true;
             $('#load_dialog').modal('hide');
