@@ -1,4 +1,10 @@
-import { buildSpendOptions, martialArtDegrees, spendCategories, type SpendOption } from "../engine/spendOptions";
+import {
+  buildSpendTabs,
+  martialArtDegrees,
+  spendTabIds,
+  type SpendOption,
+  type SpendTabId,
+} from "../engine/spendOptions";
 import { combatModules } from "../data/combatModules";
 import { dpCost, spendDp } from "../engine/developmentPoints";
 import type { CharacterDocument } from "../schema/character";
@@ -14,12 +20,14 @@ type SpendDpDialogProps = {
 };
 
 export function SpendDpDialog({ character, level, className, open, onClose, onSpend }: SpendDpDialogProps) {
+  const [activeTab, setActiveTab] = useState<SpendTabId>("Combat");
   const [selected, setSelected] = useState<SpendOption | null>(null);
   const [amount, setAmount] = useState(10);
-  const grouped = useMemo(() => buildSpendOptions(character, className), [character, className]);
+  const tabs = useMemo(() => buildSpendTabs(character, className), [character, className]);
 
   useEffect(() => {
     if (open) {
+      setActiveTab("Combat");
       setSelected(null);
       setAmount(10);
     }
@@ -49,6 +57,11 @@ export function SpendDpDialog({ character, level, className, open, onClose, onSp
     applySpend(spendDp(character, level || 1, selected.name, [degree]));
   };
 
+  const selectOption = (item: SpendOption) => {
+    setSelected(item);
+    if (item.kind === "dp") setAmount(item.cost);
+  };
+
   return (
     <div className="dialog-backdrop" onClick={onClose}>
       <div
@@ -62,35 +75,67 @@ export function SpendDpDialog({ character, level, className, open, onClose, onSp
           <div className="natural-bonus-dialog-header-top">
             <h2 id="spend-dp-title">Spend development points</h2>
           </div>
-          <p className="muted">Level {level} ({className}). Select an ability, module, or martial art.</p>
+          <p className="muted">Level {level} ({className}). Choose a category, then select what to buy.</p>
         </header>
 
-        <div className="natural-bonus-fields spend-dp-fields">
-          {spendCategories.map((category) => {
-            const items = grouped[category];
-            if (!items.length) return null;
-            return (
-              <section key={category} className="natural-bonus-field">
-                <h3>{category}</h3>
-                <ul className="natural-bonus-list">
-                  {items.map((item) => (
-                    <li key={`${item.kind}-${item.name}`}>
-                      <button
-                        type="button"
-                        className={`natural-bonus-item ${selected?.name === item.name && selected.kind === item.kind ? "natural-bonus-item--selected" : ""}`}
-                        onClick={() => {
-                          setSelected(item);
-                          if (item.kind === "dp") setAmount(item.cost);
+        <nav className="spend-dp-tabs" role="tablist" aria-label="DP categories">
+          {spendTabIds.map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab}
+              className={activeTab === tab ? "active" : ""}
+              onClick={() => {
+                setActiveTab(tab);
+                setSelected(null);
+              }}
+            >
+              {tab}
+            </button>
+          ))}
+        </nav>
+
+        <div className="spend-dp-fields spend-dp-tab-panel" role="tabpanel">
+          {tabs[activeTab].map((spendSection) => (
+            <section key={spendSection.id} className="spend-dp-section">
+              <h3>{spendSection.label}</h3>
+              <table className="spend-dp-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {spendSection.items.map((item) => {
+                    const isSelected = selected?.name === item.name && selected.kind === item.kind;
+                    return (
+                      <tr
+                        key={`${item.kind}-${item.name}`}
+                        className={isSelected ? "spend-dp-row--selected" : ""}
+                        onClick={() => selectOption(item)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            selectOption(item);
+                          }
                         }}
+                        tabIndex={0}
+                        role="button"
+                        aria-pressed={isSelected}
                       >
-                        {item.name} ({item.cost} {item.unit})
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            );
-          })}
+                        <td>{item.name}</td>
+                        <td>
+                          {item.cost} {item.unit}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </section>
+          ))}
         </div>
 
         <footer className="dialog-footer spend-dp-footer">

@@ -536,8 +536,88 @@ textarea { min-height: 10rem; width: 100%; }
   width: min(64rem, 100%);
 }
 
-.spend-dp-fields {
+.spend-dp-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.spend-dp-tabs button {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  padding: 0.4rem 0.75rem;
+}
+
+.spend-dp-tabs button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.spend-dp-tab-panel {
+  overflow: auto;
+  padding: 0.75rem 1.25rem 1rem;
   max-height: 50vh;
+}
+
+.spend-dp-section {
+  margin-bottom: 1.25rem;
+}
+
+.spend-dp-section:last-child {
+  margin-bottom: 0;
+}
+
+.spend-dp-section h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+.spend-dp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.spend-dp-table th,
+.spend-dp-table td {
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.spend-dp-table th {
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.spend-dp-table th:last-child,
+.spend-dp-table td:last-child {
+  width: 6rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.spend-dp-table tbody tr {
+  cursor: pointer;
+}
+
+.spend-dp-table tbody tr:hover {
+  background: var(--selected);
+}
+
+.spend-dp-row--selected {
+  background: var(--selected);
+}
+
+.spend-dp-row--selected td {
+  font-weight: 650;
+}
+
+.spend-dp-fields {
+  max-height: none;
 }
 
 .spend-dp-footer {
