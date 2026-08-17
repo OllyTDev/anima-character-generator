@@ -9,6 +9,7 @@ import { combatModules } from "../data/combatModules";
 import { dpCost, spendDp } from "../engine/developmentPoints";
 import type { CharacterDocument } from "../schema/character";
 import { useEffect, useMemo, useState } from "react";
+import { NumberInput } from "./NumberInput";
 
 type SpendDpDialogProps = {
   character: CharacterDocument;
@@ -22,7 +23,7 @@ type SpendDpDialogProps = {
 export function SpendDpDialog({ character, level, className, open, onClose, onSpend }: SpendDpDialogProps) {
   const [activeTab, setActiveTab] = useState<SpendTabId>("Combat");
   const [selected, setSelected] = useState<SpendOption | null>(null);
-  const [amount, setAmount] = useState(10);
+  const [amount, setAmount] = useState<number | null>(10);
   const tabs = useMemo(() => buildSpendTabs(character, className), [character, className]);
 
   useEffect(() => {
@@ -43,12 +44,12 @@ export function SpendDpDialog({ character, level, className, open, onClose, onSp
   const confirmSimpleSpend = () => {
     if (!selected) return;
     if (selected.kind === "dp") {
-      applySpend(spendDp(character, level || 1, selected.name, amount));
+      applySpend(spendDp(character, level || 1, selected.name, amount!));
       return;
     }
     if (selected.kind === "module") {
       const module = combatModules[selected.name];
-      applySpend(spendDp(character, level || 1, selected.name, module.Option_Title ? ["Any"] : 1));
+      applySpend(spendDp(character, level || 1, selected.name, module.Option_Title ? [""] : 1));
     }
   };
 
@@ -114,7 +115,10 @@ export function SpendDpDialog({ character, level, className, open, onClose, onSp
                       <tr
                         key={`${item.kind}-${item.name}`}
                         className={isSelected ? "spend-dp-row--selected" : ""}
-                        onClick={() => selectOption(item)}
+                        onClick={() => {
+                          setSelected(item);
+                          if (item.kind === "dp") setAmount(item.cost);
+                        }}
                         onKeyDown={(event) => {
                           if (event.key === "Enter" || event.key === " ") {
                             event.preventDefault();
@@ -145,16 +149,15 @@ export function SpendDpDialog({ character, level, className, open, onClose, onSp
             <div className="spend-dp-confirm">
               <label>
                 {selected.name} — {selected.cost} DP each
-                <input
-                  type="number"
+                <NumberInput
                   min={selected.cost}
                   step={selected.cost}
                   value={amount}
-                  onChange={(event) => setAmount(Number(event.target.value))}
+                  onChange={setAmount}
                 />
               </label>
-              <button type="button" onClick={confirmSimpleSpend}>
-                Spend {amount} DP on {selected.name}
+              <button type="button" disabled={amount === null} onClick={confirmSimpleSpend}>
+                Spend {amount ?? 0} DP on {selected.name}
               </button>
             </div>
           ) : selected.kind === "module" ? (

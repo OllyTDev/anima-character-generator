@@ -103,6 +103,8 @@ export type KiAbilityDef = {
   Requirements?: readonly string[];
   Options?: readonly string[];
   Option_Title?: string;
+  /** Rules text shown in Ki ability tree tooltips; omit until documented. */
+  effect?: string;
 };
 
 export type EssentialAbilityDef = {

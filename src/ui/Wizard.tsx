@@ -21,9 +21,11 @@ import { mkRemaining, removeKiAbility } from "../engine/martialKnowledge";
 import type { Characteristic } from "../data/types";
 import { useCharacterStore, useSheet, type WizardStep } from "../store/characterStore";
 import { useEffect, useState } from "react";
+import { DpPurchaseItem } from "./DpPurchaseItem";
 import { FullCharacterSheet } from "./FullCharacterSheet";
-import { NaturalBonusDialog, naturalBonusAmount } from "./NaturalBonusDialog";
 import { KiAbilitiesDialog } from "./KiAbilitiesDialog";
+import { NaturalBonusDialog, naturalBonusAmount } from "./NaturalBonusDialog";
+import { NumberInput } from "./NumberInput";
 import { SpendDpDialog } from "./SpendDpDialog";
 
 const steps: { id: WizardStep; label: string }[] = [
@@ -168,10 +170,12 @@ function CreatureStep() {
         </label>
         <label>
           Gnosis
-          <input
-            type="number"
+          <NumberInput
             value={character.gnosis}
-            onChange={(event) => patch((current) => ({ ...current, gnosis: Number(event.target.value) }))}
+            onChange={(value) => {
+              if (value === null) return;
+              patch((current) => ({ ...current, gnosis: value }));
+            }}
           />
         </label>
         <label>
@@ -305,20 +309,20 @@ function BasicsStep() {
           {tables.characteristics.map((name) => (
             <label key={name}>
               {name}
-              <input
-                type="number"
+              <NumberInput
                 min={1}
                 max={20}
                 value={character.characteristics[name as Characteristic]}
-                onChange={(event) =>
+                onChange={(value) => {
+                  if (value === null) return;
                   patch((current) => ({
                     ...current,
                     characteristics: {
                       ...current.characteristics,
-                      [name]: Number(event.target.value),
+                      [name]: value,
                     },
-                  }))
-                }
+                  }));
+                }}
               />
             </label>
           ))}
@@ -335,10 +339,12 @@ function BasicsStep() {
       <div className="form-grid">
         <label>
           Appearance
-          <input
-            type="number"
+          <NumberInput
             value={character.appearance}
-            onChange={(event) => patch((current) => ({ ...current, appearance: Number(event.target.value) }))}
+            onChange={(value) => {
+              if (value === null) return;
+              patch((current) => ({ ...current, appearance: value }));
+            }}
           />
         </label>
         <label>
@@ -354,11 +360,13 @@ function BasicsStep() {
         </label>
         <label>
           XP
-          <input
-            type="number"
+          <NumberInput
             min={0}
             value={character.xp}
-            onChange={(event) => patch((current) => ({ ...current, xp: Number(event.target.value) }))}
+            onChange={(value) => {
+              if (value === null) return;
+              patch((current) => ({ ...current, xp: value }));
+            }}
           />
         </label>
       </div>
@@ -550,20 +558,15 @@ function DevelopmentStep() {
           ) : null}
           {!levelHasPurchases(info) ? <p className="muted">No purchases yet.</p> : null}
           {Object.keys(info.dp).map((name) => (
-            <div className="list-item" key={name}>
-              <span>
-                {name}: {JSON.stringify(info.dp[name])}
-              </span>
-              <button
-                className="secondary"
-                type="button"
-                onClick={() =>
-                  patch((currentChar) => removeDp(currentChar, engineLevelForIndex(index, charLevel), name))
-                }
-              >
-                Remove
-              </button>
-            </div>
+            <DpPurchaseItem
+              key={name}
+              name={name}
+              value={info.dp[name]}
+              onRemove={() => patch((currentChar) => removeDp(currentChar, engineLevelForIndex(index, charLevel), name))}
+              onUpdate={(nextValue) =>
+                patch((currentChar) => spendDp(currentChar, engineLevelForIndex(index, charLevel), name, nextValue))
+              }
+            />
           ))}
           {info.mk
             ? Object.keys(info.mk).map((name) => (

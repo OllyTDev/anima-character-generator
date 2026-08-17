@@ -331,6 +331,15 @@ input, select, textarea {
   background: var(--input-bg);
   padding: 0.4rem 0.5rem;
 }
+
+input.input--invalid {
+  border-color: var(--error);
+}
+
+input.input--invalid:focus {
+  outline: 2px solid color-mix(in srgb, var(--error) 35%, transparent);
+  outline-offset: 1px;
+}
 textarea { min-height: 10rem; width: 100%; }
 
 .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
@@ -352,6 +361,27 @@ textarea { min-height: 10rem; width: 100%; }
   gap: 0.75rem;
   padding: 0.4rem 0;
   border-bottom: 1px solid var(--line);
+  align-items: center;
+}
+
+.list-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.purchase-edit {
+  flex: 1;
+  min-width: 0;
+}
+
+.purchase-option {
+  flex: 1;
+  min-width: 0;
+}
+
+.purchase-option input {
+  width: 100%;
 }
 
 .error { color: var(--error); }
@@ -365,6 +395,12 @@ textarea { min-height: 10rem; width: 100%; }
   justify-content: center;
   padding: 1rem;
   z-index: 100;
+}
+
+.dialog-backdrop--fullscreen {
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
 }
 
 .dialog {
@@ -659,6 +695,259 @@ textarea { min-height: 10rem; width: 100%; }
   gap: 0.5rem;
 }
 
+.ki-tree-dialog {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+}
+
+.ki-tree-dialog .spend-dp-tab-panel {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+
+.ki-tree-tab-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem 1rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.ki-tree-tab-panel--single {
+  grid-template-columns: 1fr;
+}
+
+.ki-tree-panel {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ki-tree-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.ki-tree-panel-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.ki-tree-expand {
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  padding: 0.25rem 0.55rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.ki-tree-expand:hover {
+  background: var(--selected);
+}
+
+.ki-tree-viewport {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background:
+    linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 1.5rem 1.5rem,
+    linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 1.5rem 1.5rem,
+    var(--paper);
+  cursor: grab;
+  touch-action: none;
+}
+
+.ki-tree-viewport:active {
+  cursor: grabbing;
+}
+
+.ki-tree-canvas {
+  position: relative;
+}
+
+.ki-tree-edges {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ki-tree-edge {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1.5;
+  transition: stroke 0.15s ease, opacity 0.15s ease;
+}
+
+.ki-tree-viewport--path-active .ki-tree-edge:not(.ki-tree-edge--path) {
+  opacity: 0.2;
+}
+
+.ki-tree-edge--path {
+  stroke: var(--accent-2);
+  stroke-width: 2.5;
+  opacity: 1;
+}
+
+.ki-tree-nodes {
+  position: relative;
+}
+
+.ki-tree-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: var(--paper);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: opacity 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.ki-tree-viewport--path-active .ki-tree-node:not(.ki-tree-node--path) {
+  opacity: 0.3;
+}
+
+.ki-tree-node--path {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--accent-2) 70%, var(--line));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-2) 25%, transparent);
+}
+
+.ki-tree-node--path-target {
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-2) 45%, transparent);
+}
+
+.ki-tree-node-label {
+  font-size: 0.72rem;
+  line-height: 1.15;
+}
+
+.ki-tree-node-cost {
+  align-self: flex-start;
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  background: var(--selected);
+}
+
+.ki-tree-node-cost--warning {
+  background: color-mix(in srgb, var(--warning, #c97) 35%, var(--selected));
+}
+
+.ki-tree-node--learned {
+  background: color-mix(in srgb, var(--accent) 18%, var(--paper));
+  border-color: var(--accent);
+}
+
+.ki-tree-node--available {
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-2) 35%, transparent);
+}
+
+.ki-tree-node--locked {
+  opacity: 0.45;
+  filter: grayscale(0.35);
+}
+
+.ki-tree-node--path.ki-tree-node--locked {
+  opacity: 1;
+  filter: none;
+}
+
+.ki-tree-node--unaffordable {
+  border-color: var(--accent-2);
+}
+
+.ki-tree-node--selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.ki-tree-tooltip {
+  position: fixed;
+  z-index: 30;
+  max-width: 18rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: var(--paper);
+  box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+
+.ki-tree-tooltip strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.ki-tree-tooltip-cost,
+.ki-tree-tooltip-effect,
+.ki-tree-tooltip-note,
+.ki-tree-tooltip-warning {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+}
+
+.ki-tree-tooltip-reqs {
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.ki-tree-tooltip-reqs ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.ki-list-search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.ki-list-search input {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.25rem;
+  background: var(--paper);
+  color: var(--text);
+}
+
+.ki-tree-footer-warning {
+  margin: 0;
+  flex: 1 1 100%;
+  color: var(--warning, #c97);
+}
+
+.spend-dp-confirm button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .sheet-section--secondaries-full {
   grid-column: 1 / -1;
 }
@@ -680,4 +969,5 @@ textarea { min-height: 10rem; width: 100%; }
   .char-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .res-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .stat-grid--wide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ki-tree-tab-panel { grid-template-columns: 1fr; }
 }
