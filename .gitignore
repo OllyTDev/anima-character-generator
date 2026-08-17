@@ -1,5 +1,11 @@
-*.DS_Store
-.project
+dist
+node_modules
 build
 doc
-node_modules
+*.local
+.DS_Store
+.project
+playwright-report
+test-results
+blob-report
+.vite
