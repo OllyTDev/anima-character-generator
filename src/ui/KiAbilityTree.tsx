@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KiGraph } from "../engine/kiAbilityGraph";
 import {
   kiAbilityEdgeKey,
@@ -59,6 +59,26 @@ export function KiAbilityTree({
     () => (pathTarget ? kiAbilityPrerequisitePath(graph, pathTarget) : null),
     [graph, pathTarget],
   );
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const rankYs = [...new Set(layout.nodes.map((node) => node.y))].sort((a, b) => a - b);
+    const topRankYs = new Set(rankYs.slice(0, 2));
+    const focusNodes = layout.nodes.filter((node) => topRankYs.has(node.y));
+    if (!focusNodes.length) return;
+
+    const minX = Math.min(...focusNodes.map((node) => node.x));
+    const maxX = Math.max(...focusNodes.map((node) => node.x + node.width));
+    const focusCenterX = (minX + maxX) / 2;
+    const focusMinY = Math.min(...focusNodes.map((node) => node.y));
+
+    setPan({
+      x: viewport.clientWidth / 2 - focusCenterX,
+      y: Math.max(16, viewport.clientHeight * 0.08 - focusMinY),
+    });
+    setScale(1);
+  }, [layout, title, expanded]);
 
   const handleWheel = useCallback((event: React.WheelEvent<HTMLDivElement>) => {
     event.preventDefault();
