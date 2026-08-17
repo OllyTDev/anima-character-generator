@@ -244,6 +244,19 @@ h3 { font-size: 0.95rem; margin: 0.75rem 0 0.35rem; font-weight: 650; }
   gap: 0.75rem;
 }
 
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 24rem;
+}
+
+.checkbox-label {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; }
 input, select, textarea {
   border: 1px solid var(--line);

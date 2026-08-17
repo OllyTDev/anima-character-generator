@@ -29,7 +29,7 @@ import { useState } from "react";
 import { FullCharacterSheet } from "./FullCharacterSheet";
 
 const steps: { id: WizardStep; label: string }[] = [
-  { id: "type", label: "Type" },
+  { id: "type", label: "Generation Options" },
   { id: "creature", label: "Creature" },
   { id: "essentials", label: "Essential Abilities" },
   { id: "basics", label: "Characteristics" },
@@ -43,7 +43,7 @@ export function Wizard() {
   const human = character.type === "Human";
   const visibleSteps = steps.filter((item) => {
     if (item.id === "sheet") return true;
-    if (human && (item.id === "creature" || item.id === "essentials")) return false;
+    if (human && item.id === "essentials") return false;
     return true;
   });
 
@@ -105,19 +105,8 @@ function TypeStep() {
   const { character, patch, setStep } = useCharacterStore();
   return (
     <section>
-      <h2>Creature type</h2>
-      <div className="form-grid">
-        <label>
-          Type
-          <select
-            value={character.type}
-            onChange={(event) => patch((current) => ({ ...current, type: event.target.value }))}
-          >
-            {creatureTypes.map((type) => (
-              <option key={type}>{type}</option>
-            ))}
-          </select>
-        </label>
+      <h2>Generation Options</h2>
+      <div className="form-stack">
         <label>
           Choose a generation method.
           <select
@@ -139,8 +128,7 @@ function TypeStep() {
             ))}
           </select>
         </label>
-        <label>
-          <span>OllyT house rules</span>
+        <label className="checkbox-label">
           <input
             type="checkbox"
             checked={character.settings.ollyTRules}
@@ -151,6 +139,7 @@ function TypeStep() {
               }))
             }
           />
+          <span>OllyT house rules</span>
         </label>
       </div>
       <div className="actions">
@@ -168,6 +157,17 @@ function CreatureStep() {
     <section>
       <h2>Gnosis and nature</h2>
       <div className="form-grid">
+        <label>
+          Creature type
+          <select
+            value={character.type}
+            onChange={(event) => patch((current) => ({ ...current, type: event.target.value }))}
+          >
+            {creatureTypes.map((type) => (
+              <option key={type}>{type}</option>
+            ))}
+          </select>
+        </label>
         <label>
           Gnosis
           <input
