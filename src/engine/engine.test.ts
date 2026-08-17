@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { tables } from "../data/tables";
 import { ability } from "./ability";
-import { characteristic, lifePoints, modifier } from "./characteristics";
+import { characteristic, lifePoints, modifier, characteristicPointValue, characteristicTotal } from "./characteristics";
 import { addAdvantage, addDisadvantage, cpRemaining, cpTotal } from "./creationPoints";
 import { dpCost, dpRemaining } from "./developmentPoints";
 import { characterLevel, presence, syncLevels } from "./helpers";
@@ -43,6 +43,13 @@ describe("characteristics and ability", () => {
     expect(presence(character)).toBe(30);
     character.xp = 225;
     expect(presence(character)).toBe(40);
+  });
+
+  it("totals primary characteristics with 10 counting as 11", () => {
+    expect(characteristicPointValue(10)).toBe(11);
+    expect(characteristicPointValue(7)).toBe(7);
+    expect(characteristicTotal(createEmptyCharacter())).toBe(40);
+    expect(characteristicTotal(freelancer())).toBe(55);
   });
 
   it("adds class bonuses into Attack for a level 1 freelancer", () => {

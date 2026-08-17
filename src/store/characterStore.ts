@@ -10,7 +10,7 @@ import {
 } from "../persist/save";
 import { createEmptyCharacter, type CharacterDocument } from "../schema/character";
 
-export type WizardStep = "type" | "creature" | "essentials" | "basics" | "points" | "abilities";
+export type WizardStep = "type" | "creature" | "essentials" | "basics" | "points" | "abilities" | "sheet";
 
 type Store = {
   character: CharacterDocument;

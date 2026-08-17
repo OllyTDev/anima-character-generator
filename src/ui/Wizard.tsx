@@ -4,6 +4,7 @@ import { classNames } from "../data/classes";
 import { combatModules } from "../data/combatModules";
 import { disadvantages } from "../data/disadvantages";
 import { essentialAbilities } from "../data/essentialAbilities";
+import { generationMethods } from "../data/generationMethods";
 import { kiAbilities } from "../data/kiAbilities";
 import { creatureTypes, genders, races } from "../data/lists";
 import { martialArts } from "../data/martialArts";
@@ -18,11 +19,14 @@ import {
   removeDisadvantage,
 } from "../engine/creationPoints";
 import { changeClass, dpCost, dpRemaining, removeDp, setEvenLevelCharacteristic, setNaturalBonus, spendDp } from "../engine/developmentPoints";
+import { characteristicTotal } from "../engine/characteristics";
+import { characteristicPointLimit } from "../data/generationMethods";
 import { characterLevel } from "../engine/helpers";
 import { addKiAbility, mkRemaining, removeKiAbility } from "../engine/martialKnowledge";
 import type { Characteristic } from "../data/types";
 import { useCharacterStore, useSheet, type WizardStep } from "../store/characterStore";
 import { useState } from "react";
+import { FullCharacterSheet } from "./FullCharacterSheet";
 
 const steps: { id: WizardStep; label: string }[] = [
   { id: "type", label: "Type" },
@@ -31,12 +35,14 @@ const steps: { id: WizardStep; label: string }[] = [
   { id: "basics", label: "Characteristics" },
   { id: "points", label: "Creation Points" },
   { id: "abilities", label: "Development" },
+  { id: "sheet", label: "Full Character Sheet" },
 ];
 
 export function Wizard() {
   const { character, step, setStep, patch, reset, exportJson, importJson, download, loadError } = useCharacterStore();
   const human = character.type === "Human";
   const visibleSteps = steps.filter((item) => {
+    if (item.id === "sheet") return true;
     if (human && (item.id === "creature" || item.id === "essentials")) return false;
     return true;
   });
@@ -56,6 +62,9 @@ export function Wizard() {
       {step === "basics" && <BasicsStep />}
       {step === "points" && <PointsStep />}
       {step === "abilities" && <DevelopmentStep />}
+      {step === "sheet" && <FullCharacterSheet />}
+      {step !== "sheet" && (
+      <>
       <h2>Save / Load</h2>
       <p className="muted">Versioned JSON (schemaVersion 1). Autosaved in this browser; export to keep a copy.</p>
       <textarea
@@ -79,13 +88,15 @@ export function Wizard() {
           onClick={() =>
             patch((current) => ({
               ...current,
-              settings: { ollyTRules: !current.settings.ollyTRules },
+              settings: { ...current.settings, ollyTRules: !current.settings.ollyTRules },
             }))
           }
         >
           OllyT rules: {character.settings.ollyTRules ? "on" : "off"}
         </button>
       </div>
+      </>
+      )}
     </main>
   );
 }
@@ -108,12 +119,36 @@ function TypeStep() {
           </select>
         </label>
         <label>
+          Choose a generation method.
+          <select
+            value={character.settings.generationMethod}
+            onChange={(event) =>
+              patch((current) => ({
+                ...current,
+                settings: {
+                  ...current.settings,
+                  generationMethod: event.target.value as typeof current.settings.generationMethod,
+                },
+              }))
+            }
+          >
+            {generationMethods.map((method) => (
+              <option key={method.id} value={method.id}>
+                {method.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
           <span>OllyT house rules</span>
           <input
             type="checkbox"
             checked={character.settings.ollyTRules}
             onChange={(event) =>
-              patch((current) => ({ ...current, settings: { ollyTRules: event.target.checked } }))
+              patch((current) => ({
+                ...current,
+                settings: { ...current.settings, ollyTRules: event.target.checked },
+              }))
             }
           />
         </label>
@@ -226,30 +261,80 @@ function EssentialStep() {
 
 function BasicsStep() {
   const { character, patch, setStep } = useCharacterStore();
+  const total = characteristicTotal(character);
+  const limit = characteristicPointLimit(character.settings.generationMethod);
+  const overLimit = limit !== null && total > limit;
+
   return (
     <section>
       <h2>Characteristics</h2>
-      <div className="form-grid">
-        {tables.characteristics.map((name) => (
-          <label key={name}>
-            {name}
+
+      <div className="form-section">
+        <h3>Identity</h3>
+        <div className="form-grid">
+          <label>
+            Name
             <input
-              type="number"
-              min={1}
-              max={20}
-              value={character.characteristics[name as Characteristic]}
-              onChange={(event) =>
-                patch((current) => ({
-                  ...current,
-                  characteristics: {
-                    ...current.characteristics,
-                    [name]: Number(event.target.value),
-                  },
-                }))
-              }
+              value={character.name}
+              onChange={(event) => patch((current) => ({ ...current, name: event.target.value }))}
             />
           </label>
-        ))}
+          <label>
+            Gender
+            <select
+              value={character.gender}
+              onChange={(event) => patch((current) => ({ ...current, gender: event.target.value }))}
+            >
+              {genders.map((gender) => (
+                <option key={gender}>{gender}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Race
+            <select value={character.race} onChange={(event) => patch((current) => ({ ...current, race: event.target.value }))}>
+              {races.map((race) => (
+                <option key={race}>{race}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div className="form-section">
+        <h3>Primary Characteristics</h3>
+        <div className="form-grid">
+          {tables.characteristics.map((name) => (
+            <label key={name}>
+              {name}
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={character.characteristics[name as Characteristic]}
+                onChange={(event) =>
+                  patch((current) => ({
+                    ...current,
+                    characteristics: {
+                      ...current.characteristics,
+                      [name]: Number(event.target.value),
+                    },
+                  }))
+                }
+              />
+            </label>
+          ))}
+        </div>
+        <p className={`characteristic-total ${overLimit ? "characteristic-total--over" : ""}`}>
+          <strong>Total:</strong> {total}
+          {limit !== null ? <span className="muted"> / {limit}</span> : null}
+        </p>
+        {overLimit ? (
+          <p className="error">Total exceeds the {limit} point limit for this generation method.</p>
+        ) : null}
+      </div>
+
+      <div className="form-grid">
         <label>
           Appearance
           <input
@@ -257,26 +342,6 @@ function BasicsStep() {
             value={character.appearance}
             onChange={(event) => patch((current) => ({ ...current, appearance: Number(event.target.value) }))}
           />
-        </label>
-        <label>
-          Name
-          <input value={character.name} onChange={(event) => patch((current) => ({ ...current, name: event.target.value }))} />
-        </label>
-        <label>
-          Gender
-          <select value={character.gender} onChange={(event) => patch((current) => ({ ...current, gender: event.target.value }))}>
-            {genders.map((gender) => (
-              <option key={gender}>{gender}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Race
-          <select value={character.race} onChange={(event) => patch((current) => ({ ...current, race: event.target.value }))}>
-            {races.map((race) => (
-              <option key={race}>{race}</option>
-            ))}
-          </select>
         </label>
         <label>
           Class
@@ -300,7 +365,7 @@ function BasicsStep() {
         </label>
       </div>
       <div className="actions">
-        <button type="button" onClick={() => setStep(character.type === "Human" ? "points" : "abilities")}>
+        <button type="button" disabled={overLimit} onClick={() => setStep(character.type === "Human" ? "points" : "abilities")}>
           Continue
         </button>
       </div>

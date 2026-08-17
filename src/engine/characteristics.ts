@@ -181,3 +181,16 @@ export function summary(character: CharacterDocument): string {
   const prefix = character.name ? `${character.name} ` : "";
   return `${prefix}(${parts.join(", ")})`;
 }
+
+/** Point-buy weight for a base characteristic (10 counts as 11). */
+export function characteristicPointValue(value: number): number {
+  return value === 10 ? 11 : value;
+}
+
+/** Sum of the eight primary characteristics using point-buy weighting. */
+export function characteristicTotal(character: CharacterDocument): number {
+  return tables.characteristics.reduce(
+    (sum, name) => sum + characteristicPointValue(character.characteristics[name as Characteristic]),
+    0,
+  );
+}
