@@ -1,14 +1,9 @@
-import { abilities } from "../data/abilities";
 import { advantageCosts, advantages } from "../data/advantages";
 import { classNames } from "../data/classes";
-import { combatModules } from "../data/combatModules";
 import { disadvantages } from "../data/disadvantages";
 import { essentialAbilities } from "../data/essentialAbilities";
 import { generationMethods } from "../data/generationMethods";
-import { kiAbilities } from "../data/kiAbilities";
 import { creatureTypes, genders, races } from "../data/lists";
-import { martialArts } from "../data/martialArts";
-import { primaries } from "../data/primaries";
 import { tables } from "../data/tables";
 import {
   addAdvantage,
@@ -18,16 +13,18 @@ import {
   removeAdvantage,
   removeDisadvantage,
 } from "../engine/creationPoints";
-import { changeClass, dpCost, dpRemaining, removeDp, setEvenLevelCharacteristic, setNaturalBonus, spendDp } from "../engine/developmentPoints";
+import { changeClass, dpRemaining, removeDp, setEvenLevelCharacteristic, setNaturalBonus, spendDp } from "../engine/developmentPoints";
 import { characteristicTotal } from "../engine/characteristics";
 import { characteristicPointLimit } from "../data/generationMethods";
 import { characterLevel } from "../engine/helpers";
-import { addKiAbility, mkRemaining, removeKiAbility } from "../engine/martialKnowledge";
+import { mkRemaining, removeKiAbility } from "../engine/martialKnowledge";
 import type { Characteristic } from "../data/types";
 import { useCharacterStore, useSheet, type WizardStep } from "../store/characterStore";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FullCharacterSheet } from "./FullCharacterSheet";
 import { NaturalBonusDialog, naturalBonusAmount } from "./NaturalBonusDialog";
+import { KiAbilitiesDialog } from "./KiAbilitiesDialog";
+import { SpendDpDialog } from "./SpendDpDialog";
 
 const steps: { id: WizardStep; label: string }[] = [
   { id: "type", label: "Generation Options" },
@@ -522,66 +519,148 @@ function CpSummary() {
 
 function DevelopmentStep() {
   const { character, patch } = useCharacterStore();
-  const level = characterLevel(character);
-  const [abilityName, setAbilityName] = useState("Attack");
-  const [amount, setAmount] = useState(10);
-  const [moduleName, setModuleName] = useState(Object.keys(combatModules)[0]);
-  const [artName, setArtName] = useState("Aikido");
-  const [kiName, setKiName] = useState("Use of Ki");
+  const charLevel = characterLevel(character);
+  const [selectedLevel, setSelectedLevel] = useState(charLevel);
+  const [spendDpOpen, setSpendDpOpen] = useState(false);
+  const [kiAbilitiesOpen, setKiAbilitiesOpen] = useState(false);
   const [naturalBonusOpen, setNaturalBonusOpen] = useState(false);
   const remaining = dpRemaining(character);
-  const current = remaining[remaining.length - 1];
-  const mkLeft = mkRemaining(character).at(-1) ?? 0;
-  const className = character.levels[character.levels.length - 1].class;
-  const cost = dpCost(character, abilityName, className);
-  const selectedNaturalBonus = character.levels[level - 1]?.naturalBonus;
-  const spendables = [
-    ...Object.keys(abilities),
-    "Ki",
-    "Accumulation Multiple",
-    "Martial Knowledge",
-    "Zeon",
-    "MA Multiple",
-    "Zeon Regeneration Multiple",
-    "Magic Level",
-    "Psychic Points",
-    "Life Point Multiple",
-  ];
+  const levelIndex = remainingIndexForLevel(selectedLevel);
+  const current = remaining[levelIndex];
+  const mkLeft = mkRemaining(character)[levelIndex] ?? mkRemaining(character).at(-1) ?? 0;
+  const className = character.levels[levelIndex]?.class ?? character.levels[0].class;
+  const selectedNaturalBonus = character.levels[levelIndex]?.naturalBonus;
+
+  useEffect(() => {
+    setSelectedLevel((level) => Math.min(level, charLevel));
+  }, [charLevel]);
 
   return (
     <section>
+      <h2>Purchases for this character</h2>
+      {character.levels.map((info, index) => (
+        <div key={index} className="level-purchases">
+          <h3>{levelLabel(index, charLevel, info.class)}</h3>
+          {info.characteristic ? <p className="muted">Characteristic: {info.characteristic}</p> : null}
+          {info.naturalBonus ? (
+            <p className="muted">
+              Natural bonus: {info.naturalBonus} (+
+              {naturalBonusAmount(character, info.naturalBonus, engineLevelForIndex(index, charLevel))})
+            </p>
+          ) : null}
+          {!levelHasPurchases(info) ? <p className="muted">No purchases yet.</p> : null}
+          {Object.keys(info.dp).map((name) => (
+            <div className="list-item" key={name}>
+              <span>
+                {name}: {JSON.stringify(info.dp[name])}
+              </span>
+              <button
+                className="secondary"
+                type="button"
+                onClick={() =>
+                  patch((currentChar) => removeDp(currentChar, engineLevelForIndex(index, charLevel), name))
+                }
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          {info.mk
+            ? Object.keys(info.mk).map((name) => (
+                <div className="list-item" key={name}>
+                  <span>MK {name}</span>
+                  <button
+                    className="secondary"
+                    type="button"
+                    onClick={() =>
+                      patch((currentChar) => removeKiAbility(currentChar, name, engineLevelForIndex(index, charLevel)))
+                    }
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))
+            : null}
+        </div>
+      ))}
+
       <h2>Development Points</h2>
-      <p>
-        Level {level}. DP left: total {Math.floor(current?.Total ?? 0)}, combat {Math.floor(current?.Combat ?? 0)},
-        supernatural {Math.floor(current?.Supernatural ?? 0)}, psychic {Math.floor(current?.Psychic ?? 0)}, other{" "}
-        {Math.floor(current?.Other ?? 0)}. MK remaining {mkLeft}.
-      </p>
       <div className="form-grid">
         <label>
-          Ability
-          <select value={abilityName} onChange={(event) => setAbilityName(event.target.value)}>
-            {spendables.map((name) => (
-              <option key={name}>{name}</option>
+          Editing level
+          <select
+            value={selectedLevel}
+            onChange={(event) => setSelectedLevel(Number(event.target.value))}
+          >
+            {charLevel === 0 ? <option value={0}>Level 0</option> : null}
+            {Array.from({ length: charLevel }, (_, index) => (
+              <option key={index + 1} value={index + 1}>
+                Level {index + 1}
+              </option>
             ))}
           </select>
         </label>
-        <label>
-          Points (cost {cost} DP each)
-          <input type="number" min={0} value={amount} onChange={(event) => setAmount(Number(event.target.value))} />
-        </label>
       </div>
-      <div className="actions">
-        <button type="button" onClick={() => patch((currentChar) => spendDp(currentChar, level || 1, abilityName, amount))}>
+      <p>
+        Level {selectedLevel} ({className}). DP left: total {Math.floor(current?.Total ?? 0)}, combat{" "}
+        {Math.floor(current?.Combat ?? 0)}, supernatural {Math.floor(current?.Supernatural ?? 0)}, psychic{" "}
+        {Math.floor(current?.Psychic ?? 0)}, other {Math.floor(current?.Other ?? 0)}. MK remaining {mkLeft}.
+      </p>
+
+      <div className="development-actions">
+        <button type="button" onClick={() => setSpendDpOpen(true)}>
           Spend DP
         </button>
+        <button type="button" onClick={() => setKiAbilitiesOpen(true)}>
+          Ki abilities
+        </button>
+        {selectedLevel > 0 ? (
+          <button type="button" onClick={() => setNaturalBonusOpen(true)}>
+            Choose a natural bonus at this level
+          </button>
+        ) : null}
       </div>
-      {level > 0 && level % 2 === 0 ? (
+
+      {selectedLevel > 0 && selectedNaturalBonus ? (
+        <p className="muted">
+          Natural bonus: <strong>{selectedNaturalBonus}</strong> (+
+          {naturalBonusAmount(character, selectedNaturalBonus, selectedLevel)})
+        </p>
+      ) : null}
+
+      <SpendDpDialog
+        character={character}
+        level={selectedLevel}
+        className={className}
+        open={spendDpOpen}
+        onClose={() => setSpendDpOpen(false)}
+        onSpend={(next) => patch(() => next)}
+      />
+      <KiAbilitiesDialog
+        character={character}
+        level={selectedLevel}
+        mkRemaining={Math.floor(mkLeft)}
+        open={kiAbilitiesOpen}
+        onClose={() => setKiAbilitiesOpen(false)}
+        onLearn={(next) => patch(() => next)}
+      />
+      <NaturalBonusDialog
+        character={character}
+        level={selectedLevel}
+        open={naturalBonusOpen}
+        onClose={() => setNaturalBonusOpen(false)}
+        onSelect={(name) => patch((currentChar) => setNaturalBonus(currentChar, selectedLevel, name))}
+      />
+
+      {selectedLevel > 0 && selectedLevel % 2 === 0 ? (
         <label>
           Even-level characteristic
           <select
-            value={character.levels[level - 1]?.characteristic ?? ""}
+            value={character.levels[levelIndex]?.characteristic ?? ""}
             onChange={(event) =>
-              patch((currentChar) => setEvenLevelCharacteristic(currentChar, level, event.target.value as Characteristic))
+              patch((currentChar) =>
+                setEvenLevelCharacteristic(currentChar, selectedLevel, event.target.value as Characteristic),
+              )
             }
           >
             <option value="">None</option>
@@ -591,111 +670,25 @@ function DevelopmentStep() {
           </select>
         </label>
       ) : null}
-      {level > 0 ? (
-        <div className="natural-bonus-picker">
-          {selectedNaturalBonus ? (
-            <p className="muted">
-              Natural bonus: <strong>{selectedNaturalBonus}</strong> (+
-              {naturalBonusAmount(character, selectedNaturalBonus, level)})
-            </p>
-          ) : (
-            <p className="muted">No natural bonus chosen for this level yet.</p>
-          )}
-          <button type="button" onClick={() => setNaturalBonusOpen(true)}>
-            Choose a natural bonus at this level
-          </button>
-          <NaturalBonusDialog
-            character={character}
-            level={level}
-            open={naturalBonusOpen}
-            onClose={() => setNaturalBonusOpen(false)}
-            onSelect={(name) => patch((currentChar) => setNaturalBonus(currentChar, level, name))}
-          />
-        </div>
-      ) : null}
-      <h2>Combat modules</h2>
-      <div className="form-grid">
-        <label>
-          Module
-          <select value={moduleName} onChange={(event) => setModuleName(event.target.value)}>
-            {Object.keys(combatModules).map((name) => (
-              <option key={name}>{name}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div className="actions">
-        <button
-          type="button"
-          onClick={() =>
-            patch((currentChar) =>
-              spendDp(currentChar, level || 1, moduleName, combatModules[moduleName].Option_Title ? ["Any"] : 1),
-            )
-          }
-        >
-          Add module ({dpCost(character, moduleName, className)} DP, {primaries.forAbility(moduleName)})
-        </button>
-      </div>
-      <h2>Martial arts</h2>
-      <div className="form-grid">
-        <label>
-          Art
-          <select value={artName} onChange={(event) => setArtName(event.target.value)}>
-            {Object.keys(martialArts).map((name) => (
-              <option key={name}>{name}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div className="actions">
-        <button type="button" onClick={() => patch((currentChar) => spendDp(currentChar, level || 1, artName, ["Base"]))}>
-          Learn base degree
-        </button>
-      </div>
-      <h2>Ki abilities</h2>
-      <div className="form-grid">
-        <label>
-          Ki / Nemesis
-          <select value={kiName} onChange={(event) => setKiName(event.target.value)}>
-            {Object.keys(kiAbilities).map((name) => (
-              <option key={name}>{name}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div className="actions">
-        <button type="button" onClick={() => patch((currentChar) => addKiAbility(currentChar, kiName, level || 0))}>
-          Learn Ki ability
-        </button>
-      </div>
-      <h2>Purchases this character</h2>
-      {character.levels.map((info, index) => (
-        <div key={index}>
-          <h3>
-            {info.class} {index === 0 && level === 0 ? "(level 0)" : `level ${index + 1}`}
-          </h3>
-          {Object.keys(info.dp).map((name) => (
-            <div className="list-item" key={name}>
-              <span>
-                {name}: {JSON.stringify(info.dp[name])}
-              </span>
-              <button className="secondary" type="button" onClick={() => patch((currentChar) => removeDp(currentChar, index === 0 ? 0 : index + 1, name))}>
-                Remove
-              </button>
-            </div>
-          ))}
-          {info.mk
-            ? Object.keys(info.mk).map((name) => (
-                <div className="list-item" key={name}>
-                  <span>MK {name}</span>
-                  <button className="secondary" type="button" onClick={() => patch((currentChar) => removeKiAbility(currentChar, name, index === 0 ? 0 : index + 1))}>
-                    Remove
-                  </button>
-                </div>
-              ))
-            : null}
-        </div>
-      ))}
     </section>
   );
+}
+
+function engineLevelForIndex(index: number, charLevel: number): number {
+  return charLevel === 0 ? 0 : index + 1;
+}
+
+function remainingIndexForLevel(selectedLevel: number): number {
+  return selectedLevel === 0 ? 0 : selectedLevel - 1;
+}
+
+function levelLabel(index: number, charLevel: number, className: string): string {
+  if (charLevel === 0 && index === 0) return `${className} (level 0)`;
+  return `${className} level ${index + 1}`;
+}
+
+function levelHasPurchases(info: { dp: Record<string, unknown>; mk?: Record<string, unknown> }): boolean {
+  if (Object.keys(info.dp).length > 0) return true;
+  if (info.mk && Object.keys(info.mk).length > 0) return true;
+  return false;
 }

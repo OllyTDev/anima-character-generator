@@ -500,6 +500,85 @@ textarea { min-height: 10rem; width: 100%; }
   max-width: 20rem;
 }
 
+.level-purchases {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.level-purchases:last-of-type {
+  border-bottom: 0;
+}
+
+.level-purchases h3 {
+  margin: 0 0 0.35rem;
+}
+
+.level-purchases .muted {
+  margin: 0 0 0.35rem;
+}
+
+.development-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.development-actions button {
+  border: 1px solid var(--accent-2);
+  background: var(--accent-2);
+  color: var(--on-accent);
+  padding: 0.4rem 0.75rem;
+}
+
+.spend-dp-dialog {
+  width: min(64rem, 100%);
+}
+
+.spend-dp-fields {
+  max-height: 50vh;
+}
+
+.spend-dp-footer {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+.spend-dp-footer .secondary {
+  align-self: flex-end;
+}
+
+.spend-dp-hint {
+  margin: 0;
+}
+
+.spend-dp-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.spend-dp-confirm p {
+  margin: 0;
+  flex: 1 1 100%;
+}
+
+.spend-dp-confirm button {
+  border: 1px solid var(--accent-2);
+  background: var(--accent-2);
+  color: var(--on-accent);
+  padding: 0.4rem 0.75rem;
+}
+
+.spend-dp-degrees {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .sheet-section--secondaries-full {
   grid-column: 1 / -1;
 }
