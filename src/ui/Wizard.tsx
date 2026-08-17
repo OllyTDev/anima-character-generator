@@ -1,4 +1,4 @@
-import { abilities, secondaryAbilities } from "../data/abilities";
+import { abilities } from "../data/abilities";
 import { advantageCosts, advantages } from "../data/advantages";
 import { classNames } from "../data/classes";
 import { combatModules } from "../data/combatModules";
@@ -27,6 +27,7 @@ import type { Characteristic } from "../data/types";
 import { useCharacterStore, useSheet, type WizardStep } from "../store/characterStore";
 import { useState } from "react";
 import { FullCharacterSheet } from "./FullCharacterSheet";
+import { NaturalBonusDialog, naturalBonusAmount } from "./NaturalBonusDialog";
 
 const steps: { id: WizardStep; label: string }[] = [
   { id: "type", label: "Generation Options" },
@@ -527,11 +528,13 @@ function DevelopmentStep() {
   const [moduleName, setModuleName] = useState(Object.keys(combatModules)[0]);
   const [artName, setArtName] = useState("Aikido");
   const [kiName, setKiName] = useState("Use of Ki");
+  const [naturalBonusOpen, setNaturalBonusOpen] = useState(false);
   const remaining = dpRemaining(character);
   const current = remaining[remaining.length - 1];
   const mkLeft = mkRemaining(character).at(-1) ?? 0;
   const className = character.levels[character.levels.length - 1].class;
   const cost = dpCost(character, abilityName, className);
+  const selectedNaturalBonus = character.levels[level - 1]?.naturalBonus;
   const spendables = [
     ...Object.keys(abilities),
     "Ki",
@@ -589,18 +592,26 @@ function DevelopmentStep() {
         </label>
       ) : null}
       {level > 0 ? (
-        <label>
-          Natural bonus
-          <select
-            value={character.levels[level - 1]?.naturalBonus ?? ""}
-            onChange={(event) => patch((currentChar) => setNaturalBonus(currentChar, level, event.target.value))}
-          >
-            <option value="">None</option>
-            {secondaryAbilities(character.settings.ollyTRules).map((name) => (
-              <option key={name}>{name}</option>
-            ))}
-          </select>
-        </label>
+        <div className="natural-bonus-picker">
+          {selectedNaturalBonus ? (
+            <p className="muted">
+              Natural bonus: <strong>{selectedNaturalBonus}</strong> (+
+              {naturalBonusAmount(character, selectedNaturalBonus, level)})
+            </p>
+          ) : (
+            <p className="muted">No natural bonus chosen for this level yet.</p>
+          )}
+          <button type="button" onClick={() => setNaturalBonusOpen(true)}>
+            Choose a natural bonus at this level
+          </button>
+          <NaturalBonusDialog
+            character={character}
+            level={level}
+            open={naturalBonusOpen}
+            onClose={() => setNaturalBonusOpen(false)}
+            onSelect={(name) => patch((currentChar) => setNaturalBonus(currentChar, level, name))}
+          />
+        </div>
       ) : null}
       <h2>Combat modules</h2>
       <div className="form-grid">

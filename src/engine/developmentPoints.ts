@@ -292,7 +292,8 @@ export function changeClass(character: CharacterDocument, level: number, classNa
 export function setNaturalBonus(character: CharacterDocument, level: number, name: string): CharacterDocument {
   const next = cloneCharacter(character);
   if (level < 1 || level > next.levels.length) return next;
-  next.levels[level - 1].naturalBonus = name;
+  if (name) next.levels[level - 1].naturalBonus = name;
+  else delete next.levels[level - 1].naturalBonus;
   return next;
 }
 

@@ -1,3 +1,5 @@
+import { tables } from "../data/tables";
+import { useMemo, useState } from "react";
 import type { DerivedSheet } from "../engine/derived";
 
 type CharacterSheetContentProps = {
@@ -166,14 +168,7 @@ export function CharacterSheetContent({ sheet, variant, showTitle = true }: Char
         </section>
       ) : null}
 
-      <section className="sheet-section">
-        <h2>Secondary Abilities</h2>
-        <div className={`sec-grid ${full ? "sec-grid--full" : ""}`}>
-          {sheet.secondaries.map((item) => (
-            <Stat key={item.name} label={item.name} value={item.score} />
-          ))}
-        </div>
-      </section>
+      <SecondaryAbilitiesSection sheet={sheet} full={full} />
 
       {(sheet.advantages.length > 0 || sheet.disadvantages.length > 0) && (
         <section className="sheet-section">
@@ -207,6 +202,77 @@ export function CharacterSheetContent({ sheet, variant, showTitle = true }: Char
         </section>
       )}
     </div>
+  );
+}
+
+function SecondaryAbilitiesSection({ sheet, full }: { sheet: DerivedSheet; full: boolean }) {
+  const [query, setQuery] = useState("");
+  const normalizedQuery = query.trim().toLowerCase();
+
+  const grouped = useMemo(() => {
+    const byField = Object.fromEntries(tables.fields.map((field) => [field, [] as typeof sheet.secondaries])) as Record<
+      string,
+      typeof sheet.secondaries
+    >;
+    for (const item of sheet.secondaries) {
+      byField[item.field]?.push(item);
+    }
+    for (const field of tables.fields) {
+      byField[field].sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return byField;
+  }, [sheet.secondaries]);
+
+  const filteredAlphabetical = useMemo(() => {
+    const sorted = [...sheet.secondaries].sort((a, b) => a.name.localeCompare(b.name));
+    if (!normalizedQuery) return sorted;
+    return sorted.filter((item) => item.name.toLowerCase().includes(normalizedQuery));
+  }, [normalizedQuery, sheet.secondaries]);
+
+  if (full) {
+    return (
+      <section className="sheet-section sheet-section--secondaries-full">
+        <h2>Secondary Abilities</h2>
+        <label className="secondary-search">
+          Search abilities
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Type to filter..."
+          />
+        </label>
+        {filteredAlphabetical.length ? (
+          <div className="sec-grid sec-grid--full">
+            {filteredAlphabetical.map((item) => (
+              <Stat key={item.name} label={item.name} value={item.score} />
+            ))}
+          </div>
+        ) : (
+          <p className="muted">No abilities match your search.</p>
+        )}
+      </section>
+    );
+  }
+
+  return (
+    <section className="sheet-section">
+      <h2>Secondary Abilities</h2>
+      {tables.fields.map((field) => {
+        const items = grouped[field];
+        if (!items.length) return null;
+        return (
+          <div key={field} className="sheet-subsection">
+            <h3>{field}</h3>
+            <div className="sec-grid">
+              {items.map((item) => (
+                <Stat key={item.name} label={item.name} value={item.score} />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </section>
   );
 }
 

@@ -1,4 +1,5 @@
 import type { AbilityDef } from "./types";
+import { tables } from "./tables";
 
 export const abilities: Record<string, AbilityDef> = {
   Attack: { Characteristic: "DEX" },
@@ -114,6 +115,48 @@ export function secondaryAbilities(ollyTRules: boolean): string[] {
     if (ability.OllyTRule && !ollyTRules) return false;
     return true;
   });
+}
+
+export type SecondaryAbilityInfo = {
+  name: string;
+  field: string;
+  characteristic: string;
+};
+
+export function secondaryAbilitiesGrouped(ollyTRules: boolean): Record<(typeof tables.fields)[number], SecondaryAbilityInfo[]> {
+  const grouped = Object.fromEntries(tables.fields.map((field) => [field, [] as SecondaryAbilityInfo[]])) as Record<
+    (typeof tables.fields)[number],
+    SecondaryAbilityInfo[]
+  >;
+
+  for (const name of secondaryAbilities(ollyTRules)) {
+    const ability = abilities[name];
+    if (!ability?.Field) continue;
+    grouped[ability.Field as (typeof tables.fields)[number]].push({
+      name,
+      field: ability.Field,
+      characteristic: ability.Characteristic,
+    });
+  }
+
+  for (const field of tables.fields) {
+    grouped[field].sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  return grouped;
+}
+
+export function secondaryAbilitiesSorted(ollyTRules: boolean): SecondaryAbilityInfo[] {
+  return secondaryAbilities(ollyTRules)
+    .map((name) => {
+      const ability = abilities[name];
+      return {
+        name,
+        field: ability.Field!,
+        characteristic: ability.Characteristic,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export function primaryAbilities(): string[] {

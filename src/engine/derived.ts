@@ -1,4 +1,4 @@
-import { secondaryAbilities } from "../data/abilities";
+import { abilities, secondaryAbilities } from "../data/abilities";
 import { kiCharacteristics } from "../data/lists";
 import { tables } from "../data/tables";
 import type { Characteristic } from "../data/types";
@@ -128,6 +128,7 @@ export function deriveSheet(character: CharacterDocument) {
     dominionTechniques: dominionTechniques(character),
     secondaries: secondaryAbilities(character.settings.ollyTRules).map((name) => ({
       name,
+      field: abilities[name].Field!,
       score: ability(character, name),
     })),
     advantages: Object.keys(character.advantages).map((name) => advantageSummary(character, name)),
