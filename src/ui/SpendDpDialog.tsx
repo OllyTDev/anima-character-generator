@@ -9,6 +9,7 @@ import { combatModules } from "../data/combatModules";
 import { dpCost, spendDp } from "../engine/developmentPoints";
 import type { CharacterDocument } from "../schema/character";
 import { useEffect, useMemo, useState } from "react";
+import { DialogBackdrop } from "./DialogBackdrop";
 import { NumberInput } from "./NumberInput";
 
 type SpendDpDialogProps = {
@@ -64,10 +65,9 @@ export function SpendDpDialog({ character, level, className, open, onClose, onSp
   };
 
   return (
-    <div className="dialog-backdrop" onClick={onClose}>
+    <DialogBackdrop onDismiss={onClose}>
       <div
         className="dialog spend-dp-dialog"
-        onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-labelledby="spend-dp-title"
         aria-modal="true"
@@ -189,6 +189,6 @@ export function SpendDpDialog({ character, level, className, open, onClose, onSp
           </button>
         </footer>
       </div>
-    </div>
+    </DialogBackdrop>
   );
 }

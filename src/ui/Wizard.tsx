@@ -17,8 +17,9 @@ import { changeClass, dpRemaining, removeDp, setEvenLevelCharacteristic, setNatu
 import { characteristicTotal } from "../engine/characteristics";
 import { characteristicPointLimit } from "../data/generationMethods";
 import { characterLevel } from "../engine/helpers";
-import { mkRemaining, removeKiAbility } from "../engine/martialKnowledge";
+import { mkPurchasesForLevel, mkRemaining, removeKiAbility } from "../engine/martialKnowledge";
 import type { Characteristic } from "../data/types";
+import type { CharacterDocument, LevelRecord } from "../schema/character";
 import { useCharacterStore, useSheet, type WizardStep } from "../store/characterStore";
 import { useEffect, useState } from "react";
 import { DpPurchaseItem } from "./DpPurchaseItem";
@@ -556,7 +557,7 @@ function DevelopmentStep() {
               {naturalBonusAmount(character, info.naturalBonus, engineLevelForIndex(index, charLevel))})
             </p>
           ) : null}
-          {!levelHasPurchases(info) ? <p className="muted">No purchases yet.</p> : null}
+          {!levelHasPurchases(character, info, index) ? <p className="muted">No purchases yet.</p> : null}
           {Object.keys(info.dp).map((name) => (
             <DpPurchaseItem
               key={name}
@@ -568,22 +569,20 @@ function DevelopmentStep() {
               }
             />
           ))}
-          {info.mk
-            ? Object.keys(info.mk).map((name) => (
-                <div className="list-item" key={name}>
-                  <span>MK {name}</span>
-                  <button
-                    className="secondary"
-                    type="button"
-                    onClick={() =>
-                      patch((currentChar) => removeKiAbility(currentChar, name, engineLevelForIndex(index, charLevel)))
-                    }
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))
-            : null}
+          {mkPurchasesForLevel(character, index).map((entry) => (
+            <div className="list-item" key={entry.name}>
+              <span>{entry.label}</span>
+              <button
+                className="secondary"
+                type="button"
+                onClick={() =>
+                  patch((currentChar) => removeKiAbility(currentChar, entry.name, engineLevelForIndex(index, charLevel)))
+                }
+              >
+                Remove
+              </button>
+            </div>
+          ))}
         </div>
       ))}
 
@@ -690,8 +689,8 @@ function levelLabel(index: number, charLevel: number, className: string): string
   return `${className} level ${index + 1}`;
 }
 
-function levelHasPurchases(info: { dp: Record<string, unknown>; mk?: Record<string, unknown> }): boolean {
+function levelHasPurchases(character: CharacterDocument, info: LevelRecord, levelIndex: number): boolean {
   if (Object.keys(info.dp).length > 0) return true;
-  if (info.mk && Object.keys(info.mk).length > 0) return true;
+  if (mkPurchasesForLevel(character, levelIndex).length > 0) return true;
   return false;
 }

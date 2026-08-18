@@ -4,6 +4,7 @@ import type { Characteristic } from "../data/types";
 import { modifier } from "../engine/characteristics";
 import type { CharacterDocument } from "../schema/character";
 import { useEffect, useState } from "react";
+import { DialogBackdrop } from "./DialogBackdrop";
 
 type NaturalBonusDialogProps = {
   character: CharacterDocument;
@@ -25,10 +26,9 @@ export function NaturalBonusDialog({ character, level, open, onClose, onSelect }
   const grouped = secondaryAbilitiesGrouped(character.settings.ollyTRules);
 
   return (
-    <div className="dialog-backdrop" onClick={onClose}>
+    <DialogBackdrop onDismiss={onClose}>
       <div
         className="dialog natural-bonus-dialog"
-        onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-labelledby="natural-bonus-title"
         aria-modal="true"
@@ -101,7 +101,7 @@ export function NaturalBonusDialog({ character, level, open, onClose, onSelect }
           ) : null}
         </footer>
       </div>
-    </div>
+    </DialogBackdrop>
   );
 }
 

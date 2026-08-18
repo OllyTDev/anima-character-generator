@@ -170,6 +170,15 @@ export function dominionTechniques(character: CharacterDocument): Record<string,
   return trees;
 }
 
+export function insufficientMkPenalty(cost: number, mkRemaining: number): number {
+  if (cost <= mkRemaining) return 0;
+  return -Math.floor((cost - mkRemaining) / 10);
+}
+
+export function exceedsMkRemaining(cost: number, mkRemaining: number): boolean {
+  return cost > mkRemaining;
+}
+
 export function addKiAbility(character: CharacterDocument, name: string, level: number, option?: string): CharacterDocument {
   const next = cloneCharacter(character);
   if (hasKiAbility(next, name, option)) return next;
@@ -194,7 +203,7 @@ export function addKiAbility(character: CharacterDocument, name: string, level: 
   if (cost > remaining) {
     next.insufficientMartialKnowledge = {
       Name: name,
-      Penalty: -Math.floor((cost - remaining) / 10),
+      Penalty: insufficientMkPenalty(cost, remaining),
       ...(option ? { Option: option } : {}),
     };
   }
@@ -205,6 +214,92 @@ export function removeKiAbility(character: CharacterDocument, name: string, leve
   const next = cloneCharacter(character);
   const index = level === 0 ? 0 : level - 1;
   if (next.levels[index].mk) delete next.levels[index].mk[name];
+  const imk = next.insufficientMartialKnowledge as { Name?: string; Tree?: string } | undefined;
+  if (imk?.Name === name && !imk.Tree) {
+    delete next.insufficientMartialKnowledge;
+  }
+  return next;
+}
+
+export type MkPurchaseEntry = {
+  name: string;
+  label: string;
+};
+
+export function mkPurchasesForLevel(character: CharacterDocument, levelIndex: number): MkPurchaseEntry[] {
+  const level = character.levels[levelIndex];
+  if (!level) return [];
+
+  const imk = character.insufficientMartialKnowledge as
+    | { Name?: string; Penalty?: number; Option?: string; Tree?: string }
+    | undefined;
+  const entries: MkPurchaseEntry[] = [];
+
+  for (const [name, value] of Object.entries(level.mk ?? {})) {
+    if (!(name in kiAbilities)) continue;
+    entries.push({ name, label: formatKiMkPurchaseLabel(name, value, imk) });
+  }
+
+  if (
+    levelIndex === 0 &&
+    imk?.Name &&
+    !imk.Tree &&
+    imk.Name in kiAbilities &&
+    !(level.mk && imk.Name in level.mk)
+  ) {
+    entries.push({
+      name: imk.Name,
+      label: formatKiMkPurchaseLabel(
+        imk.Name,
+        kiAbilities[imk.Name].Option_Title && imk.Option
+          ? { MK: kiAbilityCost(imk.Name, character.settings.ollyTRules), Options: [imk.Option] }
+          : kiAbilityCost(imk.Name, character.settings.ollyTRules),
+        imk,
+      ),
+    });
+  }
+
+  return entries.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function formatKiMkPurchaseLabel(
+  name: string,
+  value: unknown,
+  imk: { Name?: string; Penalty?: number; Option?: string; Tree?: string } | undefined,
+): string {
+  let label = `MK ${name}`;
+  if (typeof value === "number") {
+    label += ` (${value} MK)`;
+  } else if (value && typeof value === "object" && "Options" in value) {
+    const options = (value as { Options: string[] }).Options;
+    if (options.length) label += ` (${options.join(", ")})`;
+  }
+  if (imk?.Name === name && !imk.Tree && typeof imk.Penalty === "number") {
+    label += `, POW ${imk.Penalty} check to use`;
+  }
+  return label;
+}
+
+/** Restore mk entries when a forced-learn flag exists without its purchase record. */
+export function repairInsufficientMkPurchase(character: CharacterDocument): CharacterDocument {
+  const imk = character.insufficientMartialKnowledge as
+    | { Name?: string; Penalty?: number; Option?: string; Tree?: string }
+    | undefined;
+  if (!imk?.Name || imk.Tree || !(imk.Name in kiAbilities)) return character;
+
+  for (const level of character.levels) {
+    if (level.mk && imk.Name in level.mk) return character;
+  }
+
+  const next = cloneCharacter(character);
+  const mk = next.levels[0].mk ?? {};
+  next.levels[0].mk = mk;
+  const cost = kiAbilityCost(imk.Name, next.settings.ollyTRules);
+  if (kiAbilities[imk.Name].Option_Title && imk.Option) {
+    mk[imk.Name] = { MK: cost, Options: [imk.Option] };
+  } else {
+    mk[imk.Name] = cost;
+  }
   return next;
 }
 

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { deriveSheet } from "../engine/derived";
 import { syncLevels } from "../engine/helpers";
+import { repairInsufficientMkPurchase } from "../engine/martialKnowledge";
 import {
   downloadCharacter,
   loadFromLocalStorage,
@@ -26,7 +27,7 @@ type Store = {
 };
 
 function persist(character: CharacterDocument): CharacterDocument {
-  const synced = syncLevels(character);
+  const synced = repairInsufficientMkPurchase(syncLevels(character));
   if (typeof localStorage !== "undefined") saveToLocalStorage(synced);
   return synced;
 }

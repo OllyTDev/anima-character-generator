@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { kiAbilities } from "../data/kiAbilities";
 import { createEmptyCharacter } from "../schema/character";
-import { addKiAbility } from "./martialKnowledge";
+import { addKiAbility, hasKiAbility, insufficientMkPenalty, mkPurchasesForLevel, removeKiAbility, repairInsufficientMkPurchase } from "./martialKnowledge";
 import {
   buildKiForestGraph,
   buildNemesisForestGraph,
@@ -73,7 +73,36 @@ describe("kiAbilityGraph", () => {
     const character = addKiAbility(createEmptyCharacter(), "Use of Ki", 1);
     expect(kiAbilityNodeStatus(character, "Improvised Combat Techniques", 1, 0)).toBe("available");
     expect(kiAbilityNodeStatus(character, "Improvised Combat Techniques", 1, -1)).toBe("unaffordable");
-    expect(canLearnKiAbility(character, "Improvised Combat Techniques", 1, -1)).toBe(true);
+    expect(canLearnKiAbility(character, "Improvised Combat Techniques", 1, -1)).toBe(false);
+  });
+
+  it("stores overspent Ki abilities in level mk and insufficientMartialKnowledge", () => {
+    const character = createEmptyCharacter();
+    const next = addKiAbility(character, "Use of Ki", 1);
+    expect(next.levels[0].mk?.["Use of Ki"]).toBe(40);
+    expect(next.insufficientMartialKnowledge).toEqual({ Name: "Use of Ki", Penalty: -2 });
+    expect(hasKiAbility(next, "Use of Ki")).toBe(true);
+  });
+
+  it("repairs missing mk records for forced-learn Ki abilities", () => {
+    const character = createEmptyCharacter();
+    character.insufficientMartialKnowledge = { Name: "Use of Ki", Penalty: -2 };
+    character.levels[0].mk = {};
+    const repaired = repairInsufficientMkPurchase(character);
+    expect(repaired.levels[0].mk?.["Use of Ki"]).toBe(40);
+    expect(mkPurchasesForLevel(repaired, 0).some((entry) => entry.name === "Use of Ki")).toBe(true);
+  });
+
+  it("clears insufficientMartialKnowledge when removing a forced-learn Ki ability", () => {
+    let character = addKiAbility(createEmptyCharacter(), "Use of Ki", 1);
+    character = removeKiAbility(character, "Use of Ki", 1);
+    expect(character.insufficientMartialKnowledge).toBeUndefined();
+    expect(hasKiAbility(character, "Use of Ki")).toBe(false);
+  });
+
+  it("computes the Pow check penalty for insufficient MK", () => {
+    expect(insufficientMkPenalty(50, 20)).toBe(-3);
+    expect(insufficientMkPenalty(40, 40)).toBe(0);
   });
 
   it("collects prerequisite paths back toward the forest root", () => {

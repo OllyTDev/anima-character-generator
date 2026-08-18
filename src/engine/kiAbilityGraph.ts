@@ -114,7 +114,7 @@ export function canLearnKiAbility(
   mkRemaining: number,
 ): boolean {
   const status = kiAbilityNodeStatus(character, name, level, mkRemaining);
-  return status === "available" || status === "unaffordable";
+  return status === "available";
 }
 
 export function kiAbilityEffectText(name: string): string {

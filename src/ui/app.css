@@ -403,6 +403,20 @@ textarea { min-height: 10rem; width: 100%; }
   justify-content: stretch;
 }
 
+.dialog-backdrop--nested {
+  z-index: 110;
+}
+
+.ki-overspend-dialog {
+  width: min(32rem, calc(100% - 2rem));
+}
+
+.ki-overspend-message {
+  margin: 0;
+  padding: 0 1.25rem 1rem;
+  line-height: 1.45;
+}
+
 .dialog {
   background: var(--paper);
   border: 1px solid var(--line);
