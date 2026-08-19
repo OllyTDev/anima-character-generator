@@ -180,3 +180,11 @@ export function usesPsychic(character: CharacterDocument): boolean {
     character.levels.some((level) => "Psychic Points" in level.dp || "Psychic Projection" in level.dp)
   );
 }
+
+/** Whether psychic stats should appear on the character sheet. */
+export function showsPsychicStats(character: CharacterDocument): boolean {
+  return (
+    "Access to Natural Psychic Powers" in character.advantages ||
+    "Access to One Psychic Discipline" in character.advantages
+  );
+}

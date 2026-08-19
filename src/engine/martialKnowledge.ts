@@ -20,6 +20,12 @@ export function hasKiAbility(character: CharacterDocument, name: string, option?
   return false;
 }
 
+export function usesKi(character: CharacterDocument): boolean {
+  if (hasKiAbility(character, "Use of Ki") || hasKiAbility(character, "Use of Nemesis")) return true;
+  const imk = character.insufficientMartialKnowledge as { Name?: string } | undefined;
+  return imk?.Name === "Use of Ki" || imk?.Name === "Use of Nemesis";
+}
+
 export function mkUsed(character: CharacterDocument, level?: number): number {
   const count = levelCount(level, character);
   let used = 0;

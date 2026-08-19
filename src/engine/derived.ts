@@ -28,6 +28,7 @@ import {
   psychicPowers,
   psychicProjectionDefense,
   psychicProjectionOffense,
+  showsPsychicStats,
   usesPsychic,
   usesZeon,
   zeon,
@@ -42,6 +43,7 @@ import {
   listedKiAbilities,
   mkRemaining,
   mkTotals,
+  usesKi,
 } from "./martialKnowledge";
 import { initiative, movementValue } from "./movement";
 import { armorType, damageBarrier, damageReduction, resistance, resistanceModifiers } from "./resistances";
@@ -111,11 +113,13 @@ export function deriveSheet(character: CharacterDocument) {
     magicProjectionDefense: magicProjectionDefense(character),
     magicLevel: magicLevel(character),
     usesPsychic: usesPsychic(character),
+    showsPsychicStats: showsPsychicStats(character),
     psychicPoints: psychicPoints(character),
     psychicProjectionOffense: psychicProjectionOffense(character),
     psychicProjectionDefense: psychicProjectionDefense(character),
     psychicPowers: psychicPowers(character),
     disciplineAccess: disciplineAccess(character),
+    usesKi: usesKi(character),
     ki: Object.fromEntries(
       kiCharacteristics.map((name) => [
         name,

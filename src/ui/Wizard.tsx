@@ -18,8 +18,9 @@ import type { Characteristic } from "../data/types";
 import type { CharacterDocument, LevelRecord } from "../schema/character";
 import { useCharacterStore, useSheet, type WizardStep } from "../store/characterStore";
 import { useEffect, useState } from "react";
-import { DpPurchaseItem } from "./DpPurchaseItem";
 import { CreationPointDialog } from "./CreationPointDialog";
+import { DialogBackdrop } from "./DialogBackdrop";
+import { DpPurchaseItem } from "./DpPurchaseItem";
 import { FullCharacterSheet } from "./FullCharacterSheet";
 import { KiAbilitiesDialog } from "./KiAbilitiesDialog";
 import { NaturalBonusDialog, naturalBonusAmount } from "./NaturalBonusDialog";
@@ -38,6 +39,7 @@ const steps: { id: WizardStep; label: string }[] = [
 
 export function Wizard() {
   const { character, step, setStep, patch, reset, exportJson, importJson, download, loadError } = useCharacterStore();
+  const [newCharacterOpen, setNewCharacterOpen] = useState(false);
   const human = character.type === "Human";
   const visibleSteps = steps.filter((item) => {
     if (item.id === "sheet") return true;
@@ -77,7 +79,7 @@ export function Wizard() {
         <button type="button" onClick={download}>
           Download JSON
         </button>
-        <button className="secondary" type="button" onClick={reset}>
+        <button className="secondary" type="button" onClick={() => setNewCharacterOpen(true)}>
           New character
         </button>
         <button
@@ -95,6 +97,39 @@ export function Wizard() {
       </div>
       </>
       )}
+      {newCharacterOpen ? (
+        <DialogBackdrop onDismiss={() => setNewCharacterOpen(false)}>
+          <div
+            className="dialog"
+            role="alertdialog"
+            aria-labelledby="new-character-title"
+            aria-describedby="new-character-message"
+            aria-modal="true"
+          >
+            <header className="dialog-header">
+              <h2 id="new-character-title">Start a new character?</h2>
+            </header>
+            <p id="new-character-message" className="ki-overspend-message">
+              This will clear the current character and return to the start of the wizard. Export or download your JSON
+              first if you want to keep a copy.
+            </p>
+            <footer className="dialog-footer">
+              <button
+                type="button"
+                onClick={() => {
+                  reset();
+                  setNewCharacterOpen(false);
+                }}
+              >
+                New character
+              </button>
+              <button type="button" className="secondary" onClick={() => setNewCharacterOpen(false)}>
+                Cancel
+              </button>
+            </footer>
+          </div>
+        </DialogBackdrop>
+      ) : null}
     </main>
   );
 }

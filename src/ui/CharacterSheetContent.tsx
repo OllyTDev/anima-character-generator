@@ -105,6 +105,7 @@ export function CharacterSheetContent({ sheet, variant, showTitle = true }: Char
         </section>
       )}
 
+      {sheet.hasGift && (
       <section className="sheet-section">
         <h2>Summoning</h2>
         <div className="stat-grid stat-grid--wide">
@@ -114,8 +115,9 @@ export function CharacterSheetContent({ sheet, variant, showTitle = true }: Char
           <Stat label="Banish" value={sheet.banish} />
         </div>
       </section>
+      )}
 
-      {sheet.usesPsychic && (
+      {sheet.showsPsychicStats && (
         <section className="sheet-section">
           <h2>Psychic</h2>
           <div className="stat-grid stat-grid--wide">
@@ -135,6 +137,7 @@ export function CharacterSheetContent({ sheet, variant, showTitle = true }: Char
         </section>
       )}
 
+      {sheet.usesKi && (
       <section className="sheet-section">
         <h2>Ki</h2>
         <div className="ki-grid">
@@ -160,6 +163,7 @@ export function CharacterSheetContent({ sheet, variant, showTitle = true }: Char
           </div>
         ) : null}
       </section>
+      )}
 
       {sheet.racialAbilities ? (
         <section className="sheet-section">
