@@ -38,7 +38,8 @@ const steps: { id: WizardStep; label: string }[] = [
 ];
 
 export function Wizard() {
-  const { character, step, setStep, patch, reset, exportJson, importJson, download, loadError } = useCharacterStore();
+  const { character, step, setStep, patch, reset, exportJson, importJson, download, loadError, migrationNotice, dismissMigrationNotice } =
+    useCharacterStore();
   const [newCharacterOpen, setNewCharacterOpen] = useState(false);
   const human = character.type === "Human";
   const visibleSteps = steps.filter((item) => {
@@ -56,6 +57,19 @@ export function Wizard() {
           </button>
         ))}
       </nav>
+      {migrationNotice ? (
+        <div className="migration-notice" role="status">
+          <p>{migrationNotice}</p>
+          <div className="migration-notice-actions">
+            <button type="button" onClick={download}>
+              Download converted JSON
+            </button>
+            <button type="button" className="secondary" onClick={dismissMigrationNotice}>
+              Dismiss
+            </button>
+          </div>
+        </div>
+      ) : null}
       {step === "type" && <TypeStep />}
       {step === "creature" && <CreatureStep />}
       {step === "essentials" && <EssentialStep />}

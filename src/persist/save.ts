@@ -1,25 +1,28 @@
 import { characterSchema, type CharacterDocument } from "../schema/character";
+import { parseCharacterDocument, type CharacterParseResult } from "./legacyMigration";
 
 const STORAGE_KEY = "anima-character-v1";
+
+export { LEGACY_MIGRATION_NOTICE, parseCharacterDocument } from "./legacyMigration";
+export type { CharacterParseResult } from "./legacyMigration";
 
 export function serializeCharacter(character: CharacterDocument): string {
   return JSON.stringify(character, null, 2);
 }
 
 export function parseCharacter(text: string): CharacterDocument {
-  const data: unknown = JSON.parse(text);
-  return characterSchema.parse(data);
+  return parseCharacterDocument(text).character;
 }
 
 export function saveToLocalStorage(character: CharacterDocument): void {
   localStorage.setItem(STORAGE_KEY, serializeCharacter(character));
 }
 
-export function loadFromLocalStorage(): CharacterDocument | null {
+export function loadFromLocalStorage(): CharacterParseResult | null {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
   try {
-    return parseCharacter(raw);
+    return parseCharacterDocument(raw);
   } catch {
     return null;
   }
@@ -34,4 +37,8 @@ export function downloadCharacter(character: CharacterDocument): void {
   link.download = `${slug}.json`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+export function isValidCharacterDocument(data: unknown): data is CharacterDocument {
+  return characterSchema.safeParse(data).success;
 }

@@ -384,6 +384,24 @@ textarea { min-height: 10rem; width: 100%; }
   width: 100%;
 }
 
+.migration-notice {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--warning, #c97) 55%, var(--line));
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--warning, #c97) 12%, var(--paper));
+}
+
+.migration-notice p {
+  margin: 0 0 0.75rem;
+}
+
+.migration-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .error { color: var(--error); }
 
 .dialog-backdrop {

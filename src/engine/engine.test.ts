@@ -7,6 +7,7 @@ import { dpCost, dpRemaining } from "./developmentPoints";
 import { characterLevel, presence, syncLevels } from "./helpers";
 import { createEmptyCharacter } from "../schema/character";
 import { parseCharacter, serializeCharacter } from "../persist/save";
+import { parseCharacterDocument } from "../persist/legacyMigration";
 import { kiAbilityCost } from "../data/kiAbilities";
 import { deriveSheet } from "./derived";
 
@@ -122,8 +123,11 @@ describe("save format", () => {
     expect(parsed.name).toBe("Freelancer Test");
   });
 
-  it("rejects legacy unversioned JSON", () => {
-    expect(() => parseCharacter(JSON.stringify({ Name: "Old", levels: [] }))).toThrow();
+  it("migrates legacy unversioned JSON", () => {
+    const { character, migrated } = parseCharacterDocument(JSON.stringify({ Name: "Old", levels: [] }));
+    expect(migrated).toBe(true);
+    expect(character.schemaVersion).toBe(1);
+    expect(character.name).toBe("Old");
   });
 });
 

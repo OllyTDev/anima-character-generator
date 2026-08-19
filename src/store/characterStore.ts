@@ -4,8 +4,9 @@ import { syncLevels } from "../engine/helpers";
 import { repairInsufficientMkPurchase } from "../engine/martialKnowledge";
 import {
   downloadCharacter,
+  LEGACY_MIGRATION_NOTICE,
   loadFromLocalStorage,
-  parseCharacter,
+  parseCharacterDocument,
   saveToLocalStorage,
   serializeCharacter,
 } from "../persist/save";
@@ -17,6 +18,7 @@ type Store = {
   character: CharacterDocument;
   step: WizardStep;
   loadError: string | null;
+  migrationNotice: string | null;
   setCharacter: (character: CharacterDocument) => void;
   patch: (updater: (character: CharacterDocument) => CharacterDocument) => void;
   setStep: (step: WizardStep) => void;
@@ -24,6 +26,7 @@ type Store = {
   exportJson: () => string;
   importJson: (text: string) => void;
   download: () => void;
+  dismissMigrationNotice: () => void;
 };
 
 function persist(character: CharacterDocument): CharacterDocument {
@@ -32,29 +35,48 @@ function persist(character: CharacterDocument): CharacterDocument {
   return synced;
 }
 
-function initialCharacter(): CharacterDocument {
-  if (typeof localStorage === "undefined") return createEmptyCharacter();
-  return loadFromLocalStorage() ?? createEmptyCharacter();
+function initialState(): Pick<Store, "character" | "migrationNotice"> {
+  if (typeof localStorage === "undefined") {
+    return { character: createEmptyCharacter(), migrationNotice: null };
+  }
+  const loaded = loadFromLocalStorage();
+  if (!loaded) return { character: createEmptyCharacter(), migrationNotice: null };
+  if (loaded.migrated) {
+    saveToLocalStorage(loaded.character);
+  }
+  return {
+    character: loaded.character,
+    migrationNotice: loaded.migrated ? LEGACY_MIGRATION_NOTICE : null,
+  };
 }
 
 export const useCharacterStore = create<Store>((set, get) => ({
-  character: initialCharacter(),
+  ...initialState(),
   step: "type",
   loadError: null,
   setCharacter: (character) => set({ character: persist(character), loadError: null }),
   patch: (updater) => set({ character: persist(updater(get().character)), loadError: null }),
   setStep: (step) => set({ step }),
-  reset: () => set({ character: persist(createEmptyCharacter()), step: "type", loadError: null }),
+  reset: () => set({ character: persist(createEmptyCharacter()), step: "type", loadError: null, migrationNotice: null }),
   exportJson: () => serializeCharacter(get().character),
   importJson: (text) => {
     try {
-      const character = parseCharacter(text);
-      set({ character: persist(character), loadError: null, step: "abilities" });
+      const { character, migrated } = parseCharacterDocument(text);
+      set({
+        character: persist(character),
+        loadError: null,
+        migrationNotice: migrated ? LEGACY_MIGRATION_NOTICE : null,
+        step: "abilities",
+      });
     } catch (error) {
       set({ loadError: error instanceof Error ? error.message : "Invalid character JSON" });
     }
   },
-  download: () => downloadCharacter(get().character),
+  download: () => {
+    downloadCharacter(get().character);
+    set({ migrationNotice: null });
+  },
+  dismissMigrationNotice: () => set({ migrationNotice: null }),
 }));
 
 export function useSheet() {
