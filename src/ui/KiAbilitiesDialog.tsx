@@ -1,4 +1,4 @@
-import { buildKiForestGraph, buildNemesisForestGraph, canLearnKiAbility, missingKiAbilityRequirements } from "../engine/kiAbilityGraph";
+import { buildKiForestGraph, buildNemesisForestGraph, canLearnKiAbility, kiAbilityEffectText, missingKiAbilityRequirements } from "../engine/kiAbilityGraph";
 import { buildKiAbilityOptions, kiAbilityGroups, type KiAbilityOption } from "../engine/kiAbilityOptions";
 import { addKiAbility, exceedsMkRemaining, hasKiAbility, insufficientMkPenalty } from "../engine/martialKnowledge";
 import type { CharacterDocument } from "../schema/character";
@@ -195,6 +195,7 @@ export function KiAbilitiesDialog({ character, level, mkRemaining, open, onClose
                   Learn <strong>{selected.name}</strong> ({selected.cost} MK)
                   {selected.optionTitle ? <span className="muted"> — {selected.optionTitle}</span> : null}
                 </p>
+                <p className="creation-point-effect">{kiAbilityEffectText(selected.name)}</p>
                 {!selectedStatus && missingRequirements.length ? (
                   <p className="ki-tree-footer-warning">
                     Missing requirements: {missingRequirements.join(", ")}

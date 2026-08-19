@@ -8,6 +8,7 @@ import {
   canLearnKiAbility,
   hasKiGraphCycle,
   kiAbilityEdgeKey,
+  kiAbilityEffectText,
   kiAbilityNodeStatus,
   kiAbilityPrerequisitePath,
   kiAbilityRequirementsMet,
@@ -27,6 +28,13 @@ describe("kiAbilityGraph", () => {
       for (const req of def.Requirements ?? []) {
         expect(names.has(req), `${name} requires unknown ${req}`).toBe(true);
       }
+    }
+  });
+
+  it("includes effect text placeholders for every Ki ability", () => {
+    for (const name of Object.keys(kiAbilities)) {
+      expect(kiAbilities[name].effect, name).toBeTruthy();
+      expect(kiAbilityEffectText(name)).toBe(kiAbilities[name].effect);
     }
   });
 
