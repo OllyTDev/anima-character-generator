@@ -21,6 +21,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -45,6 +46,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -53,6 +55,9 @@ jobs:
       - run: npm run build
         env:
           VITE_BASE: /anima-character-generator/
+          REQUIRE_LEGACY_BUILD: "1"
+      - name: Verify legacy bundle in dist
+        run: test -f dist/legacy/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
