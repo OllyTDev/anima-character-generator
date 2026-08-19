@@ -59,10 +59,28 @@ button { cursor: pointer; }
   border-bottom: 1px solid var(--line);
 }
 
+.app-header-start {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
 .app-header-title {
   margin: 0;
   font-size: 1rem;
   font-weight: 650;
+}
+
+.legacy-version-link {
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.legacy-version-link:hover {
+  color: var(--accent-2);
+  text-decoration: underline;
 }
 
 .theme-toggle {

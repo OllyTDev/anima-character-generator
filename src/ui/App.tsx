@@ -10,7 +10,12 @@ export function App() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <p className="app-header-title">Anima Character Generator</p>
+        <div className="app-header-start">
+          <p className="app-header-title">Anima Character Generator</p>
+          <a className="legacy-version-link" href={`${import.meta.env.BASE_URL}legacy/`}>
+            Looking for the old version? Click here!
+          </a>
+        </div>
         <ThemeToggle />
       </header>
       <div className={`app ${fullSheet ? "app--full-sheet" : ""}`}>

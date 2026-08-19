@@ -33,7 +33,7 @@ npm run test:e2e  # Playwright against a local preview
 npm run build
 ```
 
-GitHub Actions runs tests and, on `master`/`main`, deploys `dist/` to GitHub Pages. After merging this rewrite, set the repository Pages source to **GitHub Actions** (Settings → Pages) so the new workflow replaces the old `gh-pages` branch publish.
+GitHub Actions runs tests and, on `master`/`main`, deploys `dist/` to GitHub Pages. The build bundles the frozen legacy app from the [`v0-legacy`](https://github.com/BandanaT/anima-character-generator/releases/tag/v0-legacy) tag at `/legacy/` so both versions stay online. After merging this rewrite, set the repository Pages source to **GitHub Actions** (Settings → Pages) so the new workflow replaces the old `gh-pages` branch publish.
 
 ## License
 
