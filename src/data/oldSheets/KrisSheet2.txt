@@ -1,0 +1,230 @@
+{
+  "Advantages": {
+    "Free Access to Any Psychic Discipline": 2,
+    "Amplify Sustained Power": 2,
+    "Psychic Point Recovery": 2
+  },
+  "Disadvantages": {
+    "Vulnerable to Heat/Cold": "Heat",
+    "Severe Phobia": "Wildfire",
+    "Psychic Exhaustion": 1
+  },
+  "Race": "Daimah Nephilim",
+  "XP": 3250,
+  "levels": [
+    {
+      "Class": "Warrior Mentalist",
+      "DP": {
+        "Psychic Points": 16,
+        "Dodge": 75,
+        "Attack": 50,
+        "Sleight of Hand": 5,
+        "Different Type / Unarmed": [
+          "Stilleto"
+        ],
+        "Persuasion": 5,
+        "Stealth": 15,
+        "Hide": 5,
+        "Intimidate": 5,
+        "Notice": 10
+      },
+      "Natural Bonus": "Stealth"
+    },
+    {
+      "Class": "Warrior Mentalist",
+      "DP": {
+        "Attack": 10,
+        "Dodge": 10,
+        "Psychic Points": 3,
+        "Martial Knowledge": 1,
+        "Notice": 5
+      },
+      "Characteristic": "WP",
+      "Natural Bonus": "Stealth",
+      "MK": {
+        "Use of Ki": 40
+      }
+    },
+    {
+      "Class": "Warrior Mentalist",
+      "DP": {
+        "Dodge": 20,
+        "Psychic Points": 3,
+        "Search": 5,
+        "Martial Knowledge": 1
+      },
+      "Natural Bonus": "Sleight of Hand"
+    },
+    {
+      "Class": "Warrior Mentalist",
+      "DP": {
+        "Attack": 20,
+        "Dodge": 5,
+        "Psychic Points": 3,
+        "Feats of Strength": 5
+      },
+      "Characteristic": "WP",
+      "Natural Bonus": "Stealth",
+      "MK": {
+        "Presence Extrusion": 10,
+        "Inhumanity": 30
+      }
+    },
+    {
+      "Class": "Warrior Mentalist",
+      "DP": {
+        "Dodge": 25,
+        "Psychic Points": 2,
+        "Stealth": 10
+      },
+      "Natural Bonus": "Sleight of Hand",
+      "MK": {
+        "Weight Elimination": 10
+      }
+    },
+    {
+      "Class": "Warrior Mentalist",
+      "DP": {
+        "Attack": 25,
+        "Hide": 5,
+        "Stealth": 5,
+        "Psychic Points": 2
+      },
+      "Characteristic": "WP",
+      "Natural Bonus": "Sleight of Hand",
+      "MK": {
+        "Energy Armor": 10
+      }
+    },
+    {
+      "Class": "Tao",
+      "DP": {
+        "Dodge": 15,
+        "Aikido": [
+          "Base",
+          "Advanced"
+        ],
+        "Sleight of Hand": 5,
+        "Stealth": 5
+      },
+      "Natural Bonus": "Intimidate",
+      "MK": {
+        "Use of Necessary Energy": 10,
+        "Elimination of Necessities": 10,
+        "Ki Concealment": 10,
+        "False Death": 10,
+        "Physical Shield": 10,
+        "Aura Extension": 10
+      }
+    },
+    {
+      "Class": "Tao",
+      "DP": {
+        "Attack": 20,
+        "Stealth": 10,
+        "Notice": 10,
+        "Selene": [
+          "Base"
+        ]
+      },
+      "Characteristic": "WP",
+      "Natural Bonus": "Intimidate",
+      "MK": {
+        "Increased Speed": 10,
+        "Increased Damage": 10,
+        "Elemental Attack": {
+          "MK": 10,
+          "Options": [
+            "Earth"
+          ]
+        },
+        "Ki Transmission": 10,
+        "Ki Healing": 10
+      }
+    },
+    {
+      "Class": "Tao",
+      "DP": {
+        "Attack": 25,
+        "Psychic Points": 1,
+        "Sleight of Hand": 10,
+        "Dodge": 5
+      },
+      "Natural Bonus": "Sleight of Hand"
+    },
+    {
+      "Class": "Tao",
+      "DP": {
+        "Dodge": 25,
+        "Psychic Points": 2,
+        "Aikido": [
+          "Supreme"
+        ]
+      },
+      "Natural Bonus": "Sleight of Hand",
+      "Characteristic": "WP"
+    },
+    {
+      "Class": "Tao",
+      "DP": {
+        "Attack": 30,
+        "Notice": 5,
+        "Stealth": 5,
+        "Psychic Points": 1
+      },
+      "Natural Bonus": "Withstand Pain"
+    },
+    {
+      "Class": "Tao",
+      "DP": {
+        "Dodge": 25,
+        "Withstand Pain": 5,
+        "Psychic Points": 1,
+        "Stealth": 5,
+        "Attack": 5
+      },
+      "Natural Bonus": "Intimidate",
+      "Characteristic": "AGI"
+    },
+    {
+      "Class": "Tao",
+      "DP": {
+        "Dodge": 30,
+        "Persuasion": 10,
+        "Psychic Points": 1
+      },
+      "Natural Bonus": "Composure"
+    },
+    {
+      "Class": "Tao",
+      "DP": {
+        "Attack": 20,
+        "Feats of Strength": 5,
+        "Style": 5,
+        "Stealth": 5,
+        "Persuasion": 5,
+        "Selene": [
+          "Arcane"
+        ]
+      },
+      "Characteristic": "DEX",
+      "Natural Bonus": "Stealth"
+    }
+  ],
+  "Type": "Human",
+  "STR": 6,
+  "DEX": 9,
+  "AGI": 9,
+  "CON": 8,
+  "INT": 5,
+  "POW": 5,
+  "WP": 10,
+  "PER": 5,
+  "Appearance": 9,
+  "Name": "Nephthys",
+  "Gender": "Female",
+  "Specializations": {
+    "Persuasion": "seduction"
+  },
+  "First Martial Art": "Aikido"
+}

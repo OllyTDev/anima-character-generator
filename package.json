@@ -1,25 +1,39 @@
 {
   "name": "anima-character-generator",
-  "version": "0.5.0",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
   "description": "A character generation utility for the Anima: Beyond Fantasy RPG",
-  "homepage": "https://github.com/jmbowman/anima-character-generator",
-  "keywords": [
-    "game"
-  ],
-  "bugs": "https://github.com/jmbowman/anima-character-generator/issues",
+  "license": "MIT",
+  "homepage": "https://github.com/BandanaT/anima-character-generator",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jmbowman/anima-character-generator.git"
+    "url": "https://github.com/BandanaT/anima-character-generator.git"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build && node scripts/copy-legacy-build.mjs",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "lint": "tsc -b --noEmit"
+  },
+  "dependencies": {
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "zod": "^3.25.76",
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
-    "grunt": "~0.4.0",
-    "grunt-contrib-jshint": "~0.1.1",
-    "grunt-contrib-requirejs": "~0.4.0",
-    "grunt-css": "~0.5.3",
-    "grunt-jsdoc": "~0.2.3",
-    "grunt-contrib-copy": "~0.4.0",
-    "grunt-contrib-clean": "~0.4.0",
-    "grunt-contrib-concat": "~0.1.2",
-    "grunt-md5": "~0.1.7"
+    "@playwright/test": "^1.54.2",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^5.0.0",
+    "jsdom": "^26.1.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.2",
+    "vitest": "^3.2.4"
   }
 }

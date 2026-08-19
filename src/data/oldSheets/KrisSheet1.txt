@@ -1,0 +1,285 @@
+{
+  "Advantages": {
+    "Exceptional Physical Resistance": 2,
+    "Regeneration": 1,
+    "Good Luck": 1
+  },
+  "Disadvantages": {
+    "Deep Sleeper": 1
+  },
+  "Race": "Human",
+  "XP": 5470,
+  "levels": [
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Attack": 75,
+        "Dodge": 75,
+        "Martial Knowledge": 10,
+        "Jump": 60,
+        "Withstand Pain": 5,
+        "Acrobatics": 15,
+        "Athleticism": 20,
+        "Notice": 10,
+        "Search": 10,
+        "Style": 5
+      },
+      "MK": {
+        "Use of Ki": 40,
+        "Weight Elimination": 10,
+        "Presence Extrusion": 10,
+        "Energy Armor": 10
+      },
+      "Natural Bonus": "Athleticism"
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Martial Knowledge": 2,
+        "Dodge": 15,
+        "Attack": 10,
+        "Athleticism": 10,
+        "Style": 5,
+        "Acrobatics": 5
+      },
+      "Characteristic": "DEX",
+      "Natural Bonus": "Acrobatics",
+      "MK": {
+        "Use of Necessary Energy": 10,
+        "Aura Extension": 10,
+        "Ki Concealment": 10
+      }
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Attack": 10,
+        "Dodge": 10,
+        "Martial Knowledge": 4,
+        "Jump": 10,
+        "Style": 10
+      },
+      "Natural Bonus": "Athleticism",
+      "MK": {
+        "Levitation": 20,
+        "Flight": 20,
+        "Elimination of Necessities": 10
+      }
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Attack": 10,
+        "Dodge": 15,
+        "Feats of Strength": 5,
+        "Style": 10,
+        "Acrobatics": 5,
+        "Notice": 5
+      },
+      "Characteristic": "AGI",
+      "Natural Bonus": "Feats of Strength"
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Dodge": 15,
+        "Attack": 10,
+        "Acrobatics": 10,
+        "Jump": 10,
+        "Notice": 5
+      },
+      "Natural Bonus": "Jump",
+      "MK": {
+        "Ki Control": 30
+      }
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Attack": 5,
+        "Dodge": 25,
+        "Acrobatics": 10,
+        "Notice": 5,
+        "Style": 5
+      },
+      "Characteristic": "AGI",
+      "Natural Bonus": "Acrobatics"
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Attack": 15,
+        "Dodge": 10,
+        "Martial Knowledge": 2,
+        "Acrobatics": 10,
+        "Notice": 10
+      },
+      "Natural Bonus": "Acrobatics",
+      "MK": {
+        "The Silver Mountain": [
+          {
+            "Name": "Shadow of the Wind",
+            "Level": 1,
+            "MK": 20
+          }
+        ],
+        "Increased Damage": 10
+      }
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Attack": 20,
+        "Notice": 10,
+        "Jump": 10,
+        "Accumulation Multiple": {
+          "AGI": 1
+        }
+      },
+      "Characteristic": "DEX",
+      "Natural Bonus": "Acrobatics"
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Dodge": 20,
+        "Attack": 10,
+        "Acrobatics": 20
+      },
+      "Natural Bonus": "Acrobatics",
+      "MK": {
+        "Inhumanity": 30
+      }
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Dodge": 25,
+        "Acrobatics": 25
+      },
+      "Characteristic": "AGI",
+      "Natural Bonus": "Acrobatics",
+      "MK": {
+        "Zen": 50,
+        "The Silver Mountain": [
+          {
+            "Name": "Killing The Dragon",
+            "Level": 1,
+            "MK": 20
+          }
+        ]
+      }
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Attack": 15,
+        "Acrobatics": 25,
+        "Dodge": 10
+      },
+      "Natural Bonus": "Acrobatics",
+      "MK": {
+        "Increased Speed": 10,
+        "Physical Shield": 10,
+        "Ki Detection": 20
+      }
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Notice": 5,
+        "Accumulation Multiple": {
+          "DEX": 1,
+          "POW": 1
+        },
+        "Dodge": 10,
+        "Acrobatics": 15
+      },
+      "Characteristic": "CON",
+      "Natural Bonus": "Acrobatics",
+      "MK": {
+        "Andrexi Family Arts": [
+          {
+            "Name": "Advanced Stamina Burst",
+            "Level": 1,
+            "MK": 10
+          }
+        ],
+        "The Silver Mountain": [
+          {
+            "Name": "Starstruck Stargazer",
+            "Level": 2,
+            "MK": 30
+          }
+        ]
+      }
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Notice": 5,
+        "Search": 15,
+        "Attack": 20,
+        "Martial Knowledge": 4
+      },
+      "Natural Bonus": "Athleticism",
+      "MK": {}
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Attack": 15,
+        "Dodge": 15,
+        "Search": 5,
+        "Notice": 5,
+        "Athleticism": 10
+      },
+      "Characteristic": "DEX",
+      "Natural Bonus": "Feats of Strength",
+      "MK": {
+        "Erudition": 10
+      }
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Attack": 5,
+        "Dodge": 25,
+        "Notice": 10,
+        "Search": 10
+      },
+      "Natural Bonus": "Feats of Strength",
+      "MK": {
+        "Elemental Attack": {
+          "MK": 10,
+          "Options": [
+            "Light"
+          ]
+        }
+      }
+    },
+    {
+      "Class": "Acrobatic Warrior",
+      "DP": {
+        "Attack": 20,
+        "Dodge": 10,
+        "Notice": 10,
+        "Search": 10
+      },
+      "Characteristic": "POW",
+      "Natural Bonus": "Notice"
+    }
+  ],
+  "Type": "Human",
+  "STR": 10,
+  "DEX": 9,
+  "AGI": 9,
+  "CON": 7,
+  "INT": 5,
+  "POW": 6,
+  "WP": 5,
+  "PER": 6,
+  "Appearance": 10,
+  "Name": "Seth Maxwell",
+  "Gender": "Male"
+}

@@ -1,0 +1,77 @@
+{
+  "Advantages": {
+    "Incomplete Gift": "Standard",
+    "Natural Learner": {
+      "Points": 2,
+      "Ability": "Style"
+    },
+    "Been Around": 2,
+    "Add One Point to a Characteristic": [
+      "INT"
+    ]
+  },
+  "Disadvantages": {
+    "Exclusive Weapon": "Pistol",
+    "Dirty Little Secret": 1,
+    "Debts": 1
+  },
+  "Race": "Human",
+  "XP": 100,
+  "levels": [
+    {
+      "Class": "Dark Paladin",
+      "DP": {
+        "Etiquette": 80,
+        "Persuasion": 75,
+        "Style": 60,
+        "Composure": 50,
+        "Notice": 25,
+        "Dance": 20,
+        "Dodge": 50,
+        "Law": 5,
+        "History": 5,
+        "Insight": 20,
+        "MA Multiple": 1,
+        "Intimidate": 5,
+        "Magic Appraisal": 5,
+        "Withstand Pain": 5
+      },
+      "Natural Bonus": "Style",
+      "MK": {
+        "Use of Ki": 0
+      }
+    },
+    {
+      "Class": "Dark Paladin",
+      "DP": {
+        "Style": 35,
+        "Dodge": 15,
+        "Etiquette": 5,
+        "Stealth": 5,
+        "Memorize": 5,
+        "Search": 5
+      },
+      "MK": {
+        "Inhumanity": 30,
+        "Weight Elimination": 10
+      },
+      "Characteristic": "POW",
+      "Natural Bonus": "Style"
+    }
+  ],
+  "Type": "Human",
+  "STR": 4,
+  "DEX": 5,
+  "AGI": 7,
+  "CON": 5,
+  "INT": 9,
+  "POW": 10,
+  "WP": 6,
+  "PER": 8,
+  "Appearance": 8,
+  "Gender": "Male",
+  "Name": "Xerxes Madrigas",
+  "Specializations": {
+    "Dance": "ballroom dancing"
+  }
+}
