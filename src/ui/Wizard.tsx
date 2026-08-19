@@ -1,18 +1,14 @@
-import { advantageCosts, advantages } from "../data/advantages";
+import {
+  advantageSummary,
+  disadvantageSummary,
+  removeAdvantage,
+  removeDisadvantage,
+} from "../engine/creationPoints";
 import { classNames } from "../data/classes";
-import { disadvantages } from "../data/disadvantages";
 import { essentialAbilities } from "../data/essentialAbilities";
 import { generationMethods } from "../data/generationMethods";
 import { creatureTypes, genders, races } from "../data/lists";
 import { tables } from "../data/tables";
-import {
-  addAdvantage,
-  addDisadvantage,
-  advantageAllowed,
-  disadvantageAllowed,
-  removeAdvantage,
-  removeDisadvantage,
-} from "../engine/creationPoints";
 import { changeClass, dpRemaining, removeDp, setEvenLevelCharacteristic, setNaturalBonus, spendDp } from "../engine/developmentPoints";
 import { characteristicTotal } from "../engine/characteristics";
 import { characteristicPointLimit } from "../data/generationMethods";
@@ -23,6 +19,7 @@ import type { CharacterDocument, LevelRecord } from "../schema/character";
 import { useCharacterStore, useSheet, type WizardStep } from "../store/characterStore";
 import { useEffect, useState } from "react";
 import { DpPurchaseItem } from "./DpPurchaseItem";
+import { CreationPointDialog } from "./CreationPointDialog";
 import { FullCharacterSheet } from "./FullCharacterSheet";
 import { KiAbilitiesDialog } from "./KiAbilitiesDialog";
 import { NaturalBonusDialog, naturalBonusAmount } from "./NaturalBonusDialog";
@@ -382,131 +379,55 @@ function BasicsStep() {
 
 function PointsStep() {
   const { character, patch, setStep } = useCharacterStore();
-  const [advantage, setAdvantage] = useState("Quick Reflexes");
-  const [disadvantage, setDisadvantage] = useState("Klutzy");
-  const [option, setOption] = useState("");
-  const costs = advantageCosts(advantage, character.settings.ollyTRules);
-  const [cost, setCost] = useState(costs[0]);
-  const advDef = advantages[advantage];
-  const disDef = disadvantages[disadvantage];
+  const [advantageOpen, setAdvantageOpen] = useState(false);
+  const [disadvantageOpen, setDisadvantageOpen] = useState(false);
 
   return (
     <section>
       <h2>Creation Points</h2>
       <CpSummary />
-      <div className="form-grid">
-        <label>
-          Advantage
-          <select
-            value={advantage}
-            onChange={(event) => {
-              setAdvantage(event.target.value);
-              setCost(advantageCosts(event.target.value, character.settings.ollyTRules)[0]);
-              setOption("");
-            }}
-          >
-            {Object.keys(advantages)
-              .filter((name) => !advantages[name].OllyTCost || character.settings.ollyTRules || name !== "Familiar")
-              .map((name) => (
-                <option key={name}>{name}</option>
-              ))}
-          </select>
-        </label>
-        {costs.length > 1 ? (
-          <label>
-            Cost
-            <select value={cost} onChange={(event) => setCost(Number(event.target.value))}>
-              {costs.map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
-        {advDef.Options ? (
-          <label>
-            {advDef.Option_Title ?? "Option"}
-            {advDef.Options.length ? (
-              <select value={option} onChange={(event) => setOption(event.target.value)}>
-                <option value="">Select</option>
-                {advDef.Options.filter((item) => !String(item).startsWith("------------")).map((item) => (
-                  <option key={String(item)}>{String(item)}</option>
-                ))}
-              </select>
-            ) : (
-              <input value={option} onChange={(event) => setOption(event.target.value)} />
-            )}
-          </label>
-        ) : null}
-      </div>
       <div className="actions">
-        <button
-          type="button"
-          onClick={() => {
-            if (!advantageAllowed(character, advantage, option || undefined)) return;
-            patch((current) => addAdvantage(current, advantage, cost, option || undefined));
-          }}
-        >
+        <button type="button" onClick={() => setAdvantageOpen(true)}>
           Add advantage
+        </button>
+        <button type="button" onClick={() => setDisadvantageOpen(true)}>
+          Add disadvantage
         </button>
       </div>
       <div className="list">
         {Object.keys(character.advantages).map((name) => (
           <div className="list-item" key={name}>
-            <span>{name}</span>
+            <span>{advantageSummary(character, name)}</span>
             <button className="secondary" type="button" onClick={() => patch((current) => removeAdvantage(current, name))}>
               Remove
             </button>
           </div>
         ))}
       </div>
-      <div className="form-grid">
-        <label>
-          Disadvantage
-          <select value={disadvantage} onChange={(event) => setDisadvantage(event.target.value)}>
-            {Object.keys(disadvantages).map((name) => (
-              <option key={name}>{name}</option>
-            ))}
-          </select>
-        </label>
-        {disDef.Options ? (
-          <label>
-            {disDef.Option_Title ?? "Option"}
-            {disDef.Options.length ? (
-              <select value={option} onChange={(event) => setOption(event.target.value)}>
-                <option value="">Select</option>
-                {disDef.Options.map((item) => (
-                  <option key={String(item)}>{String(item)}</option>
-                ))}
-              </select>
-            ) : (
-              <input value={option} onChange={(event) => setOption(event.target.value)} />
-            )}
-          </label>
-        ) : null}
-      </div>
-      <div className="actions">
-        <button
-          type="button"
-          onClick={() => {
-            if (!disadvantageAllowed(character, disadvantage, option || undefined)) return;
-            patch((current) => addDisadvantage(current, disadvantage, Array.isArray(disDef.Benefit) ? disDef.Benefit[0] : disDef.Benefit, option || undefined));
-          }}
-        >
-          Add disadvantage
-        </button>
-      </div>
       <div className="list">
         {Object.keys(character.disadvantages).map((name) => (
           <div className="list-item" key={name}>
-            <span>{name}</span>
+            <span>{disadvantageSummary(character, name)}</span>
             <button className="secondary" type="button" onClick={() => patch((current) => removeDisadvantage(current, name))}>
               Remove
             </button>
           </div>
         ))}
       </div>
+      <CreationPointDialog
+        character={character}
+        kind="advantage"
+        open={advantageOpen}
+        onClose={() => setAdvantageOpen(false)}
+        onApply={(next) => patch(() => next)}
+      />
+      <CreationPointDialog
+        character={character}
+        kind="disadvantage"
+        open={disadvantageOpen}
+        onClose={() => setDisadvantageOpen(false)}
+        onApply={(next) => patch(() => next)}
+      />
       <div className="actions">
         <button type="button" onClick={() => setStep("abilities")}>
           Continue

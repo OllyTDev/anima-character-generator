@@ -39,6 +39,7 @@ export type AdvantageDef = {
   Options?: readonly (string | number)[];
   Option_Title?: string;
   Multiple?: boolean;
+  effect?: string;
 };
 
 export type DisadvantageDef = {
@@ -46,6 +47,7 @@ export type DisadvantageDef = {
   Category?: "Magic" | "Psychic" | "Background";
   Options?: readonly (string | number)[];
   Option_Title?: string;
+  effect?: string;
 };
 
 export type ClassDef = {

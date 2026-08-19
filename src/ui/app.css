@@ -666,6 +666,40 @@ textarea { min-height: 10rem; width: 100%; }
   font-weight: 650;
 }
 
+.spend-dp-row--disabled {
+  opacity: 0.45;
+}
+
+.spend-dp-row--disabled:hover {
+  background: transparent;
+}
+
+.creation-point-dialog .spend-dp-tab-panel {
+  max-height: min(52vh, 28rem);
+  overflow: auto;
+}
+
+.creation-point-effect {
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.creation-point-confirm label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.creation-point-confirm select,
+.creation-point-confirm input {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.25rem;
+  background: var(--paper);
+  color: var(--text);
+}
+
 .spend-dp-fields {
   max-height: none;
 }
