@@ -632,6 +632,36 @@ textarea { min-height: 10rem; width: 100%; }
   align-items: center;
 }
 
+.purchase-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.purchase-specialization {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.purchase-specialization input,
+.purchase-specialization select {
+  color: var(--text);
+}
+
+.list-item--stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.list-item--stacked .list-item-actions {
+  justify-content: flex-end;
+}
+
 .list-item-actions {
   display: flex;
   flex-wrap: wrap;

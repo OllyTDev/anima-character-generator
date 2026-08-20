@@ -1,4 +1,4 @@
-export { ability } from "./ability";
+export { ability, setSpecialization } from "./ability";
 export {
   appearance,
   characteristic,

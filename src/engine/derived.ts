@@ -139,6 +139,7 @@ export function deriveSheet(character: CharacterDocument) {
       field: abilities[name].Field!,
       score: ability(character, name),
       trained: secondaryHasInvestment(character, name),
+      specialization: character.specializations?.[name],
     })),
     advantages: Object.keys(character.advantages).map((name) => advantageSummary(character, name)),
     disadvantages: Object.keys(character.disadvantages).map((name) => disadvantageSummary(character, name)),

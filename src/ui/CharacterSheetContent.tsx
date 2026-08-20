@@ -286,7 +286,7 @@ function SecondaryAbilitiesSection({ sheet, full }: { sheet: DerivedSheet; full:
           filteredAlphabetical.length ? (
             <div className="sec-grid sec-grid--full">
               {filteredAlphabetical.map((item) => (
-                <Stat key={item.name} label={item.name} value={item.score} />
+                <Stat key={item.name} label={secondaryAbilityLabel(item.name, item.specialization)} value={item.score} />
               ))}
             </div>
           ) : (
@@ -303,7 +303,11 @@ function SecondaryAbilitiesSection({ sheet, full }: { sheet: DerivedSheet; full:
                     <h4 className="sheet-subtitle">{field}</h4>
                     <div className="sec-grid sec-grid--full">
                       {items.map((item) => (
-                        <Stat key={item.name} label={item.name} value={item.score} />
+                        <Stat
+                          key={item.name}
+                          label={secondaryAbilityLabel(item.name, item.specialization)}
+                          value={item.score}
+                        />
                       ))}
                     </div>
                   </div>
@@ -320,7 +324,7 @@ function SecondaryAbilitiesSection({ sheet, full }: { sheet: DerivedSheet; full:
                 <div className="secondary-untrained-body">
                   <div className="sec-grid sec-grid--full">
                     {untrained.map((item) => (
-                      <Stat key={item.name} label={item.name} value={item.score} />
+                      <Stat key={item.name} label={secondaryAbilityLabel(item.name, item.specialization)} value={item.score} />
                     ))}
                   </div>
                 </div>
@@ -343,7 +347,11 @@ function SecondaryAbilitiesSection({ sheet, full }: { sheet: DerivedSheet; full:
             <h3>{field}</h3>
             <div className="sec-grid">
               {items.map((item) => (
-                <Stat key={item.name} label={item.name} value={item.score} />
+                <Stat
+                  key={item.name}
+                  label={secondaryAbilityLabel(item.name, item.specialization)}
+                  value={item.score}
+                />
               ))}
             </div>
           </div>
@@ -351,6 +359,10 @@ function SecondaryAbilitiesSection({ sheet, full }: { sheet: DerivedSheet; full:
       })}
     </section>
   );
+}
+
+function secondaryAbilityLabel(name: string, specialization?: string): string {
+  return specialization ? `${name} (${specialization})` : name;
 }
 
 function KiStat({ name, max, perTurn }: { name: string; max: number; perTurn: number }) {

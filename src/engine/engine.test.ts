@@ -88,6 +88,21 @@ describe("characteristics and ability", () => {
     expect(ability(character, "Notice")).toBe(10);
   });
 
+  it("adds +40 for a chosen specialization", () => {
+    const character = freelancer();
+    character.levels[0].dp.Persuasion = 10;
+    const without = ability(character, "Persuasion");
+    character.specializations = { Persuasion: "seduction" };
+    expect(ability(character, "Persuasion")).toBe(without + 40);
+  });
+
+  it("matches specializations case-insensitively when rolling for a specialty", () => {
+    const character = freelancer();
+    character.levels[0].dp.Persuasion = 10;
+    character.specializations = { Persuasion: "seduction" };
+    expect(ability(character, "Persuasion", "Seduction")).toBe(ability(character, "Persuasion"));
+  });
+
   it("applies characteristic bonuses once a secondary has dp spent", () => {
     const character = freelancer();
     character.levels[0].dp.Notice = 5;

@@ -12,6 +12,7 @@ import { levelModes } from "../data/levelModes";
 import { creatureTypes, genders, races } from "../data/lists";
 import { tables } from "../data/tables";
 import { changeClass, classChangeAtLevel, dpRemaining, formatClassChangeLabel, removeDp, setEvenLevelCharacteristic, setNaturalBonus, spendDp } from "../engine/developmentPoints";
+import { setSpecialization } from "../engine/ability";
 import { hasEditableOption, dpDisplayCategories, dpDisplayCategoryLabel, groupDpPurchaseNames } from "../engine/dpPurchases";
 import { characteristicTotal } from "../engine/characteristics";
 import { characteristicPointLimit } from "../data/generationMethods";
@@ -756,6 +757,7 @@ function DevelopmentStep() {
                       key={name}
                       name={name}
                       value={info.dp[name]}
+                      specialization={character.specializations?.[name] ?? ""}
                       onRemove={() => patch((currentChar) => removeDp(currentChar, level, name))}
                       onEdit={() => {
                         setSelectedLevel(level);
@@ -771,6 +773,9 @@ function DevelopmentStep() {
                         hasEditableOption(name)
                           ? (nextValue) => patch((currentChar) => spendDp(currentChar, level, name, nextValue))
                           : undefined
+                      }
+                      onSpecializationChange={(nextValue) =>
+                        patch((currentChar) => setSpecialization(currentChar, name, nextValue))
                       }
                     />
                   ))}
