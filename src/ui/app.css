@@ -588,27 +588,112 @@ textarea { min-height: 10rem; width: 100%; }
 
 .level-purchases {
   margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--line);
+  padding: 0.85rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
 }
 
-.level-purchases:last-of-type {
-  border-bottom: 0;
+.level-purchases--editing {
+  border-color: var(--accent-2);
+  background: color-mix(in srgb, var(--accent-2) 8%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-2) 20%, transparent);
 }
 
-.level-purchases h3 {
-  margin: 0 0 0.35rem;
+.level-purchases--selectable {
+  cursor: pointer;
+  border-color: var(--line);
+}
+
+.level-purchases--selectable:hover {
+  border-color: color-mix(in srgb, var(--accent-2) 45%, var(--line));
+  background: color-mix(in srgb, var(--accent-2) 4%, transparent);
+}
+
+.level-purchases--selectable:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
+}
+
+.level-purchases-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.level-purchases-header h3 {
+  margin: 0;
+}
+
+.level-purchases-select-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 .level-purchases .muted {
   margin: 0 0 0.35rem;
 }
 
+.level-purchase-category {
+  margin-top: 0.85rem;
+}
+
+.level-purchase-category h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.level-editor-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 1rem;
+}
+
+.level-editor-nav button {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: inherit;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.level-editor-nav button.active {
+  border-color: var(--accent-2);
+  background: var(--accent-2);
+  color: var(--on-accent);
+}
+
+.level-editor-panel {
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.level-editor-summary {
+  margin: 0 0 0.65rem;
+}
+
+.level-editor-characteristic {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  max-width: 16rem;
+}
+
 .development-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin: 1rem 0;
+  margin: 0;
 }
 
 .development-actions button {

@@ -11,7 +11,7 @@ import { levelModes } from "../data/levelModes";
 import { creatureTypes, genders, races } from "../data/lists";
 import { tables } from "../data/tables";
 import { changeClass, dpRemaining, removeDp, setEvenLevelCharacteristic, setNaturalBonus, spendDp } from "../engine/developmentPoints";
-import { hasEditableOption } from "../engine/dpPurchases";
+import { hasEditableOption, dpDisplayCategories, dpDisplayCategoryLabel, groupDpPurchaseNames } from "../engine/dpPurchases";
 import { characteristicTotal } from "../engine/characteristics";
 import { characteristicPointLimit } from "../data/generationMethods";
 import { characterLevel, MAX_CHARACTER_LEVEL, xpFromLevel } from "../engine/helpers";
@@ -544,6 +544,12 @@ function CpSummary() {
   );
 }
 
+function levelBlockShouldSelect(event: { target: EventTarget | null }): boolean {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return true;
+  return !target.closest("button, a, input, select, textarea, label");
+}
+
 function DevelopmentStep() {
   const { character, patch } = useCharacterStore();
   const charLevel = characterLevel(character);
@@ -559,10 +565,8 @@ function DevelopmentStep() {
   const [naturalBonusOpen, setNaturalBonusOpen] = useState(false);
   const remaining = dpRemaining(character);
   const levelIndex = remainingIndexForLevel(selectedLevel);
-  const current = remaining[levelIndex];
   const mkLeft = mkRemaining(character)[levelIndex] ?? mkRemaining(character).at(-1) ?? 0;
   const className = character.levels[levelIndex]?.class ?? character.levels[0].class;
-  const selectedNaturalBonus = character.levels[levelIndex]?.naturalBonus;
 
   useEffect(() => {
     setSelectedLevel((level) => Math.min(level, charLevel));
@@ -570,110 +574,178 @@ function DevelopmentStep() {
 
   return (
     <section>
-      <h2>Development Points</h2>
-      <div className="form-grid">
-        <label>
-          Editing level
-          <select
-            value={selectedLevel}
-            onChange={(event) => setSelectedLevel(Number(event.target.value))}
+      <h2>Development</h2>
+      <nav className="level-editor-nav" aria-label="Editing level">
+        {charLevel === 0 ? (
+          <button
+            type="button"
+            className={selectedLevel === 0 ? "active" : ""}
+            onClick={() => setSelectedLevel(0)}
           >
-            {charLevel === 0 ? <option value={0}>Level 0</option> : null}
-            {Array.from({ length: charLevel }, (_, index) => (
-              <option key={index + 1} value={index + 1}>
-                Level {index + 1}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <p>
-        Level {selectedLevel} ({className}). DP left: total {Math.floor(current?.Total ?? 0)}, combat{" "}
-        {Math.floor(current?.Combat ?? 0)}, supernatural {Math.floor(current?.Supernatural ?? 0)}, psychic{" "}
-        {Math.floor(current?.Psychic ?? 0)}, other {Math.floor(current?.Other ?? 0)}. MK remaining {mkLeft}.
-      </p>
-
-      <div className="development-actions">
-        <button
-          type="button"
-          onClick={() => {
-            setSpendDpEdit(null);
-            setSpendDpOpen(true);
-          }}
-        >
-          Spend DP
-        </button>
-        <button type="button" onClick={() => setKiAbilitiesOpen(true)}>
-          Ki abilities
-        </button>
-        {selectedLevel > 0 ? (
-          <button type="button" onClick={() => setNaturalBonusOpen(true)}>
-            Choose a natural bonus at this level
+            Level 0
           </button>
         ) : null}
-      </div>
+        {Array.from({ length: charLevel }, (_, index) => {
+          const level = index + 1;
+          return (
+            <button
+              key={level}
+              type="button"
+              className={selectedLevel === level ? "active" : ""}
+              onClick={() => setSelectedLevel(level)}
+            >
+              Level {level}
+            </button>
+          );
+        })}
+      </nav>
 
-      {selectedLevel > 0 && selectedNaturalBonus ? (
-        <p className="muted">
-          Natural bonus: <strong>{selectedNaturalBonus}</strong> (+
-          {naturalBonusAmount(character, selectedNaturalBonus, selectedLevel)})
-        </p>
-      ) : null}
+      {character.levels.map((info, index) => {
+        const level = engineLevelForIndex(index, charLevel);
+        const isEditing = level === selectedLevel;
+        const blockRemaining = remaining[index];
+        const blockMkLeft = mkRemaining(character)[index] ?? 0;
+        const blockNaturalBonus = info.naturalBonus;
+        const purchasesByCategory = groupDpPurchaseNames(Object.keys(info.dp));
+        const mkEntries = mkPurchasesForLevel(character, index);
 
-      <h2>Purchases for this character</h2>
-      {character.levels.map((info, index) => (
-        <div key={index} className="level-purchases">
-          <h3>{levelLabel(index, charLevel, info.class)}</h3>
-          {info.characteristic ? <p className="muted">Characteristic: {info.characteristic}</p> : null}
-          {info.naturalBonus ? (
-            <p className="muted">
-              Natural bonus: {info.naturalBonus} (+
-              {naturalBonusAmount(character, info.naturalBonus, engineLevelForIndex(index, charLevel))})
-            </p>
-          ) : null}
-          {!levelHasPurchases(character, info, index) ? <p className="muted">No purchases yet.</p> : null}
-          {Object.keys(info.dp).map((name) => (
-            <DpPurchaseItem
-              key={name}
-              name={name}
-              value={info.dp[name]}
-              onRemove={() => patch((currentChar) => removeDp(currentChar, engineLevelForIndex(index, charLevel), name))}
-              onEdit={() => {
-                setSelectedLevel(engineLevelForIndex(index, charLevel));
-                setSpendDpEdit({
-                  level: engineLevelForIndex(index, charLevel),
-                  name,
-                  value: info.dp[name],
-                  className: info.class,
-                });
-                setSpendDpOpen(true);
-              }}
-              onUpdate={
-                hasEditableOption(name)
-                  ? (nextValue) =>
-                      patch((currentChar) =>
-                        spendDp(currentChar, engineLevelForIndex(index, charLevel), name, nextValue),
-                      )
-                  : undefined
-              }
-            />
-          ))}
-          {mkPurchasesForLevel(character, index).map((entry) => (
-            <div className="list-item" key={entry.name}>
-              <span>{entry.label}</span>
-              <button
-                className="secondary"
-                type="button"
-                onClick={() =>
-                  patch((currentChar) => removeKiAbility(currentChar, entry.name, engineLevelForIndex(index, charLevel)))
-                }
-              >
-                Remove
-              </button>
+        return (
+          <div
+            key={index}
+            className={`level-purchases${isEditing ? " level-purchases--editing" : " level-purchases--selectable"}`}
+            aria-current={isEditing ? "true" : undefined}
+            role={isEditing ? undefined : "button"}
+            tabIndex={isEditing ? undefined : 0}
+            aria-label={isEditing ? undefined : `Edit ${levelLabel(index, charLevel, info.class)}`}
+            onClick={(event) => {
+              if (isEditing || !levelBlockShouldSelect(event)) return;
+              setSelectedLevel(level);
+            }}
+            onKeyDown={(event) => {
+              if (isEditing) return;
+              if (event.key !== "Enter" && event.key !== " ") return;
+              if (!levelBlockShouldSelect(event)) return;
+              event.preventDefault();
+              setSelectedLevel(level);
+            }}
+          >
+            <div className="level-purchases-header">
+              <h3>{levelLabel(index, charLevel, info.class)}</h3>
+              {!isEditing ? <p className="muted level-purchases-select-hint">Click to edit</p> : null}
             </div>
-          ))}
-        </div>
-      ))}
+
+            {isEditing ? (
+              <div className="level-editor-panel">
+                <p className="level-editor-summary">
+                  Editing level {selectedLevel} ({info.class}). DP left: total{" "}
+                  {Math.floor(blockRemaining?.Total ?? 0)}, combat {Math.floor(blockRemaining?.Combat ?? 0)},
+                  supernatural {Math.floor(blockRemaining?.Supernatural ?? 0)}, psychic{" "}
+                  {Math.floor(blockRemaining?.Psychic ?? 0)}, other {Math.floor(blockRemaining?.Other ?? 0)}. MK
+                  remaining {Math.floor(blockMkLeft)}.
+                </p>
+                <div className="development-actions">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSpendDpEdit(null);
+                      setSpendDpOpen(true);
+                    }}
+                  >
+                    Spend DP
+                  </button>
+                  <button type="button" onClick={() => setKiAbilitiesOpen(true)}>
+                    Ki abilities
+                  </button>
+                  {selectedLevel > 0 ? (
+                    <button type="button" onClick={() => setNaturalBonusOpen(true)}>
+                      Choose a natural bonus at this level
+                    </button>
+                  ) : null}
+                </div>
+                {selectedLevel > 0 && blockNaturalBonus ? (
+                  <p className="muted">
+                    Natural bonus: <strong>{blockNaturalBonus}</strong> (+
+                    {naturalBonusAmount(character, blockNaturalBonus, selectedLevel)})
+                  </p>
+                ) : null}
+                {selectedLevel > 0 && selectedLevel % 2 === 0 ? (
+                  <label className="level-editor-characteristic">
+                    Even-level characteristic
+                    <select
+                      value={info.characteristic ?? ""}
+                      onChange={(event) =>
+                        patch((currentChar) =>
+                          setEvenLevelCharacteristic(currentChar, selectedLevel, event.target.value as Characteristic),
+                        )
+                      }
+                    >
+                      <option value="">None</option>
+                      {tables.characteristics.map((name) => (
+                        <option key={name}>{name}</option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+              </div>
+            ) : null}
+
+            {info.characteristic ? <p className="muted">Characteristic: {info.characteristic}</p> : null}
+            {!isEditing && info.naturalBonus ? (
+              <p className="muted">
+                Natural bonus: {info.naturalBonus} (+
+                {naturalBonusAmount(character, info.naturalBonus, level)})
+              </p>
+            ) : null}
+            {!levelHasPurchases(character, info, index) ? <p className="muted">No purchases yet.</p> : null}
+            {dpDisplayCategories.map((category) => {
+              const dpNames = purchasesByCategory[category];
+              const categoryMkEntries = category === "MK" ? mkEntries : [];
+              if (!dpNames.length && !categoryMkEntries.length) return null;
+
+              return (
+                <section key={category} className="level-purchase-category">
+                  <h4>{dpDisplayCategoryLabel(category)}</h4>
+                  {dpNames.map((name) => (
+                    <DpPurchaseItem
+                      key={name}
+                      name={name}
+                      value={info.dp[name]}
+                      onRemove={() => patch((currentChar) => removeDp(currentChar, level, name))}
+                      onEdit={() => {
+                        setSelectedLevel(level);
+                        setSpendDpEdit({
+                          level,
+                          name,
+                          value: info.dp[name],
+                          className: info.class,
+                        });
+                        setSpendDpOpen(true);
+                      }}
+                      onUpdate={
+                        hasEditableOption(name)
+                          ? (nextValue) => patch((currentChar) => spendDp(currentChar, level, name, nextValue))
+                          : undefined
+                      }
+                    />
+                  ))}
+                  {categoryMkEntries.map((entry) => (
+                    <div className="list-item" key={entry.name}>
+                      <span>{entry.label}</span>
+                      <button
+                        className="secondary"
+                        type="button"
+                        onClick={() => patch((currentChar) => removeKiAbility(currentChar, entry.name, level))}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </section>
+              );
+            })}
+          </div>
+        );
+      })}
 
       <SpendDpDialog
         character={character}
@@ -702,25 +774,6 @@ function DevelopmentStep() {
         onClose={() => setNaturalBonusOpen(false)}
         onSelect={(name) => patch((currentChar) => setNaturalBonus(currentChar, selectedLevel, name))}
       />
-
-      {selectedLevel > 0 && selectedLevel % 2 === 0 ? (
-        <label>
-          Even-level characteristic
-          <select
-            value={character.levels[levelIndex]?.characteristic ?? ""}
-            onChange={(event) =>
-              patch((currentChar) =>
-                setEvenLevelCharacteristic(currentChar, selectedLevel, event.target.value as Characteristic),
-              )
-            }
-          >
-            <option value="">None</option>
-            {tables.characteristics.map((name) => (
-              <option key={name}>{name}</option>
-            ))}
-          </select>
-        </label>
-      ) : null}
     </section>
   );
 }
