@@ -21,7 +21,7 @@ import { mkPurchasesForLevel, mkRemaining, removeKiAbility } from "../engine/mar
 import type { Characteristic } from "../data/types";
 import type { CharacterDocument, LevelRecord } from "../schema/character";
 import { useCharacterStore, useSheet, type WizardStep } from "../store/characterStore";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChangeClassDialog } from "./ChangeClassDialog";
 import { CreationPointDialog } from "./CreationPointDialog";
 import { DialogBackdrop } from "./DialogBackdrop";
@@ -545,7 +545,8 @@ function levelBlockShouldSelect(event: { target: EventTarget | null }): boolean 
 function DevelopmentStep() {
   const { character, patch } = useCharacterStore();
   const charLevel = characterLevel(character);
-  const [selectedLevel, setSelectedLevel] = useState(charLevel);
+  const defaultLevel = charLevel === 0 ? 0 : 1;
+  const [selectedLevel, setSelectedLevel] = useState(defaultLevel);
   const [spendDpOpen, setSpendDpOpen] = useState(false);
   const [spendDpEdit, setSpendDpEdit] = useState<{
     level: number;
@@ -556,7 +557,9 @@ function DevelopmentStep() {
   const [kiAbilitiesOpen, setKiAbilitiesOpen] = useState(false);
   const [naturalBonusOpen, setNaturalBonusOpen] = useState(false);
   const [changeClassOpen, setChangeClassOpen] = useState(false);
+  const levelBlockRefs = useRef(new Map<number, HTMLDivElement>());
   const remaining = dpRemaining(character);
+  const mkLeftByLevel = mkRemaining(character);
   const levelIndex = remainingIndexForLevel(selectedLevel);
   const mkLeft = mkRemaining(character)[levelIndex] ?? mkRemaining(character).at(-1) ?? 0;
   const className = character.levels[levelIndex]?.class ?? character.levels[0].class;
@@ -565,6 +568,11 @@ function DevelopmentStep() {
     setSelectedLevel((level) => Math.min(level, charLevel));
   }, [charLevel]);
 
+  const selectLevel = (level: number) => {
+    setSelectedLevel(level);
+    levelBlockRefs.current.get(level)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <section>
       <h2>Development</h2>
@@ -572,8 +580,11 @@ function DevelopmentStep() {
         {charLevel === 0 ? (
           <button
             type="button"
-            className={selectedLevel === 0 ? "active" : ""}
-            onClick={() => setSelectedLevel(0)}
+            className={levelPillClassName(
+              selectedLevel === 0,
+              levelSpendStatus(character, 0, charLevel, remaining[0], mkLeftByLevel[0] ?? 0),
+            )}
+            onClick={() => selectLevel(0)}
           >
             Level 0
           </button>
@@ -584,8 +595,11 @@ function DevelopmentStep() {
             <button
               key={level}
               type="button"
-              className={selectedLevel === level ? "active" : ""}
-              onClick={() => setSelectedLevel(level)}
+              className={levelPillClassName(
+                selectedLevel === level,
+                levelSpendStatus(character, index, charLevel, remaining[index], mkLeftByLevel[index] ?? 0),
+              )}
+              onClick={() => selectLevel(level)}
             >
               Level {level}
             </button>
@@ -606,6 +620,10 @@ function DevelopmentStep() {
         return (
           <div
             key={index}
+            ref={(node) => {
+              if (node) levelBlockRefs.current.set(level, node);
+              else levelBlockRefs.current.delete(level);
+            }}
             className={`level-purchases${isEditing ? " level-purchases--editing" : " level-purchases--selectable"}`}
             aria-current={isEditing ? "true" : undefined}
             role={isEditing ? undefined : "button"}
@@ -613,14 +631,14 @@ function DevelopmentStep() {
             aria-label={isEditing ? undefined : `Edit ${levelLabel(index, charLevel, info.class)}`}
             onClick={(event) => {
               if (isEditing || !levelBlockShouldSelect(event)) return;
-              setSelectedLevel(level);
+              selectLevel(level);
             }}
             onKeyDown={(event) => {
               if (isEditing) return;
               if (event.key !== "Enter" && event.key !== " ") return;
               if (!levelBlockShouldSelect(event)) return;
               event.preventDefault();
-              setSelectedLevel(level);
+              selectLevel(level);
             }}
           >
             <div className="level-purchases-header">
@@ -846,6 +864,34 @@ function engineLevelForIndex(index: number, charLevel: number): number {
 
 function remainingIndexForLevel(selectedLevel: number): number {
   return selectedLevel === 0 ? 0 : selectedLevel - 1;
+}
+
+function levelSpendStatus(
+  character: CharacterDocument,
+  levelIndex: number,
+  charLevel: number,
+  levelRemaining: ReturnType<typeof dpRemaining>[number] | undefined,
+  mkLeft: number,
+): "none" | "partial" | "dp-complete" | "fully-complete" {
+  const level = engineLevelForIndex(levelIndex, charLevel);
+  const info = character.levels[levelIndex];
+  if (!info) return "none";
+
+  const hasSpending = levelHasPurchases(character, info, levelIndex, classChangeAtLevel(character, level));
+  if (!hasSpending) return "none";
+
+  const totalLeft = Math.floor(levelRemaining?.Total ?? 0);
+  const mkLeftRounded = Math.floor(mkLeft);
+  if (totalLeft <= 0 && mkLeftRounded <= 0) return "fully-complete";
+  if (totalLeft <= 0) return "dp-complete";
+  return "partial";
+}
+
+function levelPillClassName(
+  active: boolean,
+  status: "none" | "partial" | "dp-complete" | "fully-complete",
+): string {
+  return ["level-pill", `level-pill--${status}`, active ? "active" : ""].filter(Boolean).join(" ");
 }
 
 function levelLabel(index: number, charLevel: number, className: string): string {

@@ -905,6 +905,7 @@ textarea { min-height: 10rem; width: 100%; }
   padding: 0.85rem 1rem;
   border: 1px solid transparent;
   border-radius: 0.5rem;
+  scroll-margin-top: 1rem;
 }
 
 .level-purchases--editing {
@@ -968,6 +969,27 @@ textarea { min-height: 10rem; width: 100%; }
   padding: 0.35rem 0.65rem;
   border-radius: 999px;
   font-size: 0.9rem;
+}
+
+.level-editor-nav button.level-pill--none:not(.active) {
+  border-color: color-mix(in srgb, var(--error) 55%, var(--line));
+  background: color-mix(in srgb, var(--error) 14%, var(--surface));
+}
+
+.level-editor-nav button.level-pill--partial:not(.active) {
+  border-color: color-mix(in srgb, #c99700 55%, var(--line));
+  background: color-mix(in srgb, #c99700 16%, var(--surface));
+}
+
+.level-editor-nav button.level-pill--dp-complete:not(.active) {
+  border-color: color-mix(in srgb, #2a9d4b 55%, var(--line));
+  background: color-mix(in srgb, #2a9d4b 14%, var(--surface));
+}
+
+.level-editor-nav button.level-pill--fully-complete:not(.active) {
+  border-color: #22c55e;
+  background: color-mix(in srgb, #22c55e 28%, var(--surface));
+  box-shadow: 0 0 0 1px color-mix(in srgb, #22c55e 35%, transparent);
 }
 
 .level-editor-nav button.active {
