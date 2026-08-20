@@ -244,13 +244,32 @@ function SecondaryAbilitiesSection({ sheet, full }: { sheet: DerivedSheet; full:
     return byField;
   }, [sheet.secondaries]);
 
+  const trained = useMemo(() => sheet.secondaries.filter((item) => item.trained), [sheet.secondaries]);
+  const untrained = useMemo(() => sheet.secondaries.filter((item) => !item.trained), [sheet.secondaries]);
+
   const filteredAlphabetical = useMemo(() => {
     const sorted = [...sheet.secondaries].sort((a, b) => a.name.localeCompare(b.name));
     if (!normalizedQuery) return sorted;
     return sorted.filter((item) => item.name.toLowerCase().includes(normalizedQuery));
   }, [normalizedQuery, sheet.secondaries]);
 
+  const trainedByField = useMemo(() => {
+    const byField = Object.fromEntries(tables.fields.map((field) => [field, [] as typeof trained])) as Record<
+      string,
+      typeof trained
+    >;
+    for (const item of trained) {
+      byField[item.field]?.push(item);
+    }
+    for (const field of tables.fields) {
+      byField[field].sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return byField;
+  }, [trained]);
+
   if (full) {
+    const searching = normalizedQuery.length > 0;
+
     return (
       <section className="sheet-section sheet-section--secondaries-full">
         <h2>Secondary Abilities</h2>
@@ -263,14 +282,51 @@ function SecondaryAbilitiesSection({ sheet, full }: { sheet: DerivedSheet; full:
             placeholder="Type to filter..."
           />
         </label>
-        {filteredAlphabetical.length ? (
-          <div className="sec-grid sec-grid--full">
-            {filteredAlphabetical.map((item) => (
-              <Stat key={item.name} label={item.name} value={item.score} />
-            ))}
-          </div>
+        {searching ? (
+          filteredAlphabetical.length ? (
+            <div className="sec-grid sec-grid--full">
+              {filteredAlphabetical.map((item) => (
+                <Stat key={item.name} label={item.name} value={item.score} />
+              ))}
+            </div>
+          ) : (
+            <p className="muted">No abilities match your search.</p>
+          )
         ) : (
-          <p className="muted">No abilities match your search.</p>
+          <>
+            {trained.length ? (
+              tables.fields.map((field) => {
+                const items = trainedByField[field];
+                if (!items.length) return null;
+                return (
+                  <div key={field} className="sheet-subsection">
+                    <h4 className="sheet-subtitle">{field}</h4>
+                    <div className="sec-grid sec-grid--full">
+                      {items.map((item) => (
+                        <Stat key={item.name} label={item.name} value={item.score} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="muted sheet-note">No secondary abilities have development points spent yet.</p>
+            )}
+            {untrained.length ? (
+              <details className="secondary-untrained">
+                <summary className="secondary-untrained-toggle sheet-subtitle">
+                  Untrained abilities ({untrained.length})
+                </summary>
+                <div className="secondary-untrained-body">
+                  <div className="sec-grid sec-grid--full">
+                    {untrained.map((item) => (
+                      <Stat key={item.name} label={item.name} value={item.score} />
+                    ))}
+                  </div>
+                </div>
+              </details>
+            ) : null}
+          </>
         )}
       </section>
     );

@@ -57,9 +57,33 @@ function culturalBonus(
   return 0;
 }
 
+export function secondaryDpSpent(character: CharacterDocument, name: string, atLevel?: number): number {
+  const count = levelCount(atLevel, character);
+  let total = 0;
+  for (let i = 0; i < count; i++) {
+    total += asNumber(character.levels[i].dp[name]);
+  }
+  return total;
+}
+
+export function secondaryHasInvestment(character: CharacterDocument, name: string, atLevel?: number): boolean {
+  if (secondaryDpSpent(character, name, atLevel) > 0) return true;
+  const count = levelCount(atLevel, character);
+  for (let i = 0; i < count; i++) {
+    if (character.levels[i].freelancer?.includes(name)) return true;
+  }
+  return false;
+}
+
 export function ability(character: CharacterDocument, name: string, specialty?: string, atLevel?: number): number {
   const def = abilities[name];
   if (!def) return 0;
+
+  if (def.Field && !secondaryHasInvestment(character, name, atLevel)) {
+    if ("Jack of All Trades" in character.advantages) return 10;
+    return -30;
+  }
+
   const count = levelCount(atLevel, character);
   const totLevel = characterLevel(character);
   const charName = def.Characteristic as Characteristic;

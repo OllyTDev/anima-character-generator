@@ -3,7 +3,7 @@ import { kiCharacteristics } from "../data/lists";
 import { tables } from "../data/tables";
 import type { Characteristic } from "../data/types";
 import type { CharacterDocument } from "../schema/character";
-import { ability } from "./ability";
+import { ability, secondaryHasInvestment } from "./ability";
 import {
   appearance,
   characteristic,
@@ -138,6 +138,7 @@ export function deriveSheet(character: CharacterDocument) {
       name,
       field: abilities[name].Field!,
       score: ability(character, name),
+      trained: secondaryHasInvestment(character, name),
     })),
     advantages: Object.keys(character.advantages).map((name) => advantageSummary(character, name)),
     disadvantages: Object.keys(character.disadvantages).map((name) => disadvantageSummary(character, name)),

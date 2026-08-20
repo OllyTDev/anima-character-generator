@@ -73,7 +73,25 @@ describe("characteristics and ability", () => {
 
   it("applies untrained secondary penalty without Jack of All Trades", () => {
     const character = freelancer();
-    expect(ability(character, "Notice")).toBeLessThan(0);
+    expect(ability(character, "Notice")).toBe(-30);
+  });
+
+  it("ignores stat bonuses on untrained secondaries", () => {
+    let character = freelancer();
+    character = addAdvantage(character, "Acute Senses", 1);
+    expect(ability(character, "Notice")).toBe(-30);
+  });
+
+  it("uses Jack of All Trades instead of the untrained penalty", () => {
+    let character = freelancer();
+    character = addAdvantage(character, "Jack of All Trades", 1);
+    expect(ability(character, "Notice")).toBe(10);
+  });
+
+  it("applies characteristic bonuses once a secondary has dp spent", () => {
+    const character = freelancer();
+    character.levels[0].dp.Notice = 5;
+    expect(ability(character, "Notice")).toBe(0);
   });
 });
 
