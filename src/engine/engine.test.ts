@@ -3,7 +3,7 @@ import { tables } from "../data/tables";
 import { ability } from "./ability";
 import { characteristic, lifePoints, modifier, characteristicPointValue, characteristicTotal } from "./characteristics";
 import { addAdvantage, addDisadvantage, cpRemaining, cpTotal } from "./creationPoints";
-import { dpCost, dpRemaining } from "./developmentPoints";
+import { dpCost, dpRemaining, dpRemainingForLevel, dpRemainingForLevelExcluding, dpSpentForPurchase, maxAffordableDpSpend, maxDpForPurchase, unitsFromDpSpend } from "./developmentPoints";
 import { characterLevel, presence, syncLevels } from "./helpers";
 import { createEmptyCharacter } from "../schema/character";
 import { parseCharacter, serializeCharacter } from "../persist/save";
@@ -98,6 +98,32 @@ describe("development points", () => {
     character.levels[0].class = "Weaponsmaster";
     expect(dpCost(character, "Similar Weapon", "Weaponsmaster")).toBe(5);
     expect(dpCost(character, "Similar Weapon", "Freelancer")).toBe(10);
+  });
+
+  it("caps spendable DP by total, category, and ability-specific limits", () => {
+    const character = createEmptyCharacter();
+    const remaining = dpRemainingForLevel(character, 1);
+    expect(maxDpForPurchase(remaining, "Attack")).toBeLessThanOrEqual(remaining.Total);
+    expect(maxDpForPurchase(remaining, "Attack")).toBeLessThanOrEqual(remaining.Combat);
+    expect(maxDpForPurchase(remaining, "Attack")).toBeLessThanOrEqual(remaining.Attack);
+    expect(maxDpForPurchase(remaining, "Wear Armor")).toBe(remaining.Combat);
+  });
+
+  it("computes max affordable DP spend in unit increments", () => {
+    expect(maxAffordableDpSpend(10, 2)).toBe(10);
+    expect(maxAffordableDpSpend(11, 2)).toBe(10);
+    expect(maxAffordableDpSpend(3, 2)).toBe(2);
+    expect(maxAffordableDpSpend(1, 2)).toBe(0);
+    expect(unitsFromDpSpend(10, 2)).toBe(5);
+  });
+
+  it("adds back DP from an excluded purchase when editing", () => {
+    const character = createEmptyCharacter();
+    character.levels[0].dp.Attack = 5;
+    const before = dpRemainingForLevel(character, 1).Total;
+    const excluding = dpRemainingForLevelExcluding(character, 1, "Attack").Total;
+    expect(excluding).toBeGreaterThan(before);
+    expect(dpSpentForPurchase(character, "Attack", 5, character.levels[0].class)).toBe(10);
   });
 });
 

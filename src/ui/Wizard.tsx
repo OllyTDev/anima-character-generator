@@ -10,6 +10,7 @@ import { generationMethods } from "../data/generationMethods";
 import { creatureTypes, genders, races } from "../data/lists";
 import { tables } from "../data/tables";
 import { changeClass, dpRemaining, removeDp, setEvenLevelCharacteristic, setNaturalBonus, spendDp } from "../engine/developmentPoints";
+import { hasEditableOption } from "../engine/dpPurchases";
 import { characteristicTotal } from "../engine/characteristics";
 import { characteristicPointLimit } from "../data/generationMethods";
 import { characterLevel } from "../engine/helpers";
@@ -501,6 +502,12 @@ function DevelopmentStep() {
   const charLevel = characterLevel(character);
   const [selectedLevel, setSelectedLevel] = useState(charLevel);
   const [spendDpOpen, setSpendDpOpen] = useState(false);
+  const [spendDpEdit, setSpendDpEdit] = useState<{
+    level: number;
+    name: string;
+    value: unknown;
+    className: string;
+  } | null>(null);
   const [kiAbilitiesOpen, setKiAbilitiesOpen] = useState(false);
   const [naturalBonusOpen, setNaturalBonusOpen] = useState(false);
   const remaining = dpRemaining(character);
@@ -534,8 +541,23 @@ function DevelopmentStep() {
               name={name}
               value={info.dp[name]}
               onRemove={() => patch((currentChar) => removeDp(currentChar, engineLevelForIndex(index, charLevel), name))}
-              onUpdate={(nextValue) =>
-                patch((currentChar) => spendDp(currentChar, engineLevelForIndex(index, charLevel), name, nextValue))
+              onEdit={() => {
+                setSelectedLevel(engineLevelForIndex(index, charLevel));
+                setSpendDpEdit({
+                  level: engineLevelForIndex(index, charLevel),
+                  name,
+                  value: info.dp[name],
+                  className: info.class,
+                });
+                setSpendDpOpen(true);
+              }}
+              onUpdate={
+                hasEditableOption(name)
+                  ? (nextValue) =>
+                      patch((currentChar) =>
+                        spendDp(currentChar, engineLevelForIndex(index, charLevel), name, nextValue),
+                      )
+                  : undefined
               }
             />
           ))}
@@ -580,7 +602,13 @@ function DevelopmentStep() {
       </p>
 
       <div className="development-actions">
-        <button type="button" onClick={() => setSpendDpOpen(true)}>
+        <button
+          type="button"
+          onClick={() => {
+            setSpendDpEdit(null);
+            setSpendDpOpen(true);
+          }}
+        >
           Spend DP
         </button>
         <button type="button" onClick={() => setKiAbilitiesOpen(true)}>
@@ -602,10 +630,14 @@ function DevelopmentStep() {
 
       <SpendDpDialog
         character={character}
-        level={selectedLevel}
-        className={className}
+        level={spendDpEdit?.level ?? selectedLevel}
+        className={spendDpEdit?.className ?? className}
+        editPurchase={spendDpEdit ? { name: spendDpEdit.name, value: spendDpEdit.value } : null}
         open={spendDpOpen}
-        onClose={() => setSpendDpOpen(false)}
+        onClose={() => {
+          setSpendDpOpen(false);
+          setSpendDpEdit(null);
+        }}
         onSpend={(next) => patch(() => next)}
       />
       <KiAbilitiesDialog

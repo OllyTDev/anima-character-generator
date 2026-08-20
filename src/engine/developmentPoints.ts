@@ -5,6 +5,7 @@ import { essentialAbilities } from "../data/essentialAbilities";
 import { martialArts } from "../data/martialArts";
 import { powers } from "../data/powers";
 import { primaries } from "../data/primaries";
+import type { PrimaryCategory } from "../data/types";
 import type { CharacterDocument } from "../schema/character";
 import { cloneCharacter } from "../schema/character";
 import { characterLevel, intersection, isSpirit, asNumber, asStringArray } from "./helpers";
@@ -99,8 +100,72 @@ function spentForItem(character: CharacterDocument, item: string, value: unknown
 
 export type DpRemaining = Record<string, number>;
 
+const DP_CATEGORY_KEYS = new Set<PrimaryCategory | "Total">([
+  "Combat",
+  "Psychic",
+  "Supernatural",
+  "Other",
+  "Powers",
+  "Total",
+]);
+
 function num(row: Record<string, number>, key: string): number {
   return row[key] ?? 0;
+}
+
+export function dpRemainingForLevel(character: CharacterDocument, level: number): DpRemaining {
+  const index = level === 0 ? 0 : level - 1;
+  return dpRemaining(character)[index] ?? {};
+}
+
+/** Remaining DP at a level as if an existing purchase were removed (for editing). */
+export function dpRemainingForLevelExcluding(
+  character: CharacterDocument,
+  level: number,
+  purchaseName: string,
+): DpRemaining {
+  const index = level === 0 ? 0 : level - 1;
+  if (!(purchaseName in (character.levels[index]?.dp ?? {}))) {
+    return dpRemainingForLevel(character, level);
+  }
+  const next = cloneCharacter(character);
+  delete next.levels[index].dp[purchaseName];
+  return dpRemainingForLevel(next, level);
+}
+
+export function dpSpentForPurchase(
+  character: CharacterDocument,
+  name: string,
+  value: unknown,
+  className: string,
+): number {
+  return spentForItem(character, name, value, className);
+}
+
+export function maxDpForPurchase(remaining: DpRemaining, abilityName: string): number {
+  const primary = primaries.forAbility(abilityName);
+  let max = Math.min(num(remaining, "Total"), num(remaining, primary));
+  if (
+    abilityName in remaining &&
+    !DP_CATEGORY_KEYS.has(abilityName as PrimaryCategory | "Total") &&
+    !abilityName.startsWith("Save ") &&
+    abilityName !== "Class_Change"
+  ) {
+    max = Math.min(max, num(remaining, abilityName));
+  }
+  return Math.max(0, Math.floor(max));
+}
+
+/** Largest affordable DP spend, rounded down to a whole number of units. */
+export function maxAffordableDpSpend(maxDp: number, unitCost: number): number {
+  if (unitCost <= 0) return 0;
+  return Math.floor(maxDp / unitCost) * unitCost;
+}
+
+/** Convert a DP spend amount to the stored purchase value (units). */
+export function unitsFromDpSpend(dpAmount: number, unitCost: number): number {
+  if (unitCost <= 0) return 0;
+  return dpAmount / unitCost;
 }
 
 export function dpRemaining(character: CharacterDocument): DpRemaining[] {
