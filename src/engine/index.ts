@@ -27,7 +27,7 @@ export {
   unitsFromDpSpend,
   spendDp,
 } from "./developmentPoints";
-export { characterLevel, hasGift, presence, syncLevels } from "./helpers";
+export { characterLevel, hasGift, levelFromXp, presence, syncLevels, xpFromLevel, MAX_CHARACTER_LEVEL } from "./helpers";
 export { ma, magicLevel, psychicPoints, usesPsychic, usesZeon, zeon } from "./magic";
 export { addKiAbility, hasKiAbility, mkRemaining, mkTotals } from "./martialKnowledge";
 export { initiative, movementValue } from "./movement";

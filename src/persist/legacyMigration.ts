@@ -111,6 +111,10 @@ export function convertLegacyCharacter(data: unknown): CharacterDocument {
             typeof data.settings.generationMethod === "string"
               ? (data.settings.generationMethod as CharacterDocument["settings"]["generationMethod"])
               : defaults.settings.generationMethod,
+          levelMode:
+            data.settings.levelMode === "milestone"
+              ? "milestone"
+              : defaults.settings.levelMode,
         }
       : defaults.settings,
     name: asString(pickValue(data, "Name", "name")),

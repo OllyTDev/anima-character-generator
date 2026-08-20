@@ -2,6 +2,7 @@ import { z } from "zod";
 import { characteristics } from "../data/types";
 import type { Characteristic } from "../data/types";
 import { generationMethods, type GenerationMethod } from "../data/generationMethods";
+import { levelModes, type LevelMode } from "../data/levelModes";
 
 export const SCHEMA_VERSION = 1 as const;
 
@@ -12,9 +13,12 @@ export const generationMethodSchema = z.enum(generationMethods.map((item) => ite
   ...GenerationMethod[],
 ]);
 
+export const levelModeSchema = z.enum(levelModes.map((item) => item.id) as [LevelMode, ...LevelMode[]]);
+
 export const settingsSchema = z.object({
   ollyTRules: z.boolean(),
   generationMethod: generationMethodSchema.default("open"),
+  levelMode: levelModeSchema.default("xp"),
 });
 
 export const levelSchema = z.object({
@@ -70,7 +74,7 @@ export function emptyCharacteristics(): Record<Characteristic, number> {
 export function createEmptyCharacter(): CharacterDocument {
   return {
     schemaVersion: SCHEMA_VERSION,
-    settings: { ollyTRules: false, generationMethod: "open" },
+    settings: { ollyTRules: false, generationMethod: "open", levelMode: "xp" },
     name: "",
     race: "Human",
     gender: "Male",

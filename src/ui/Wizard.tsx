@@ -7,13 +7,14 @@ import {
 import { classNames } from "../data/classes";
 import { essentialAbilities } from "../data/essentialAbilities";
 import { generationMethods } from "../data/generationMethods";
+import { levelModes } from "../data/levelModes";
 import { creatureTypes, genders, races } from "../data/lists";
 import { tables } from "../data/tables";
 import { changeClass, dpRemaining, removeDp, setEvenLevelCharacteristic, setNaturalBonus, spendDp } from "../engine/developmentPoints";
 import { hasEditableOption } from "../engine/dpPurchases";
 import { characteristicTotal } from "../engine/characteristics";
 import { characteristicPointLimit } from "../data/generationMethods";
-import { characterLevel } from "../engine/helpers";
+import { characterLevel, MAX_CHARACTER_LEVEL, xpFromLevel } from "../engine/helpers";
 import { mkPurchasesForLevel, mkRemaining, removeKiAbility } from "../engine/martialKnowledge";
 import type { Characteristic } from "../data/types";
 import type { CharacterDocument, LevelRecord } from "../schema/character";
@@ -189,6 +190,32 @@ function TypeStep() {
           />
           <span>OllyT house rules</span>
         </label>
+        <label>
+          How should character level be handled?
+          <select
+            value={character.settings.levelMode}
+            onChange={(event) =>
+              patch((current) => ({
+                ...current,
+                settings: {
+                  ...current.settings,
+                  levelMode: event.target.value as typeof current.settings.levelMode,
+                },
+              }))
+            }
+          >
+            {levelModes.map((mode) => (
+              <option key={mode.id} value={mode.id}>
+                {mode.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="muted">
+          {character.settings.levelMode === "xp"
+            ? "Set XP on the Characteristics step; level is derived from the XP chart."
+            : "Choose a level on the Characteristics step; XP is set automatically from that level."}
+        </p>
       </div>
       <div className="actions">
         <button type="button" onClick={() => setStep(character.type === "Human" ? "basics" : "creature")}>
@@ -406,17 +433,37 @@ function BasicsStep() {
             ))}
           </select>
         </label>
-        <label>
-          XP
-          <NumberInput
-            min={0}
-            value={character.xp}
-            onChange={(value) => {
-              if (value === null) return;
-              patch((current) => ({ ...current, xp: value }));
-            }}
-          />
-        </label>
+        {character.settings.levelMode === "milestone" ? (
+          <label>
+            Level
+            <select
+              value={characterLevel(character)}
+              onChange={(event) => {
+                const level = Number(event.target.value);
+                patch((current) => ({ ...current, xp: xpFromLevel(level) }));
+              }}
+            >
+              <option value={0}>Level 0</option>
+              {Array.from({ length: MAX_CHARACTER_LEVEL }, (_, index) => index + 1).map((level) => (
+                <option key={level} value={level}>
+                  Level {level}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <label>
+            XP
+            <NumberInput
+              min={0}
+              value={character.xp}
+              onChange={(value) => {
+                if (value === null) return;
+                patch((current) => ({ ...current, xp: value }));
+              }}
+            />
+          </label>
+        )}
       </div>
       <div className="actions">
         <button type="button" disabled={overLimit} onClick={() => setStep(character.type === "Human" ? "points" : "abilities")}>

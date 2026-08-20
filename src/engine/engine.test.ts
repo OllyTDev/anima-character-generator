@@ -4,7 +4,7 @@ import { ability } from "./ability";
 import { characteristic, lifePoints, modifier, characteristicPointValue, characteristicTotal } from "./characteristics";
 import { addAdvantage, addDisadvantage, cpRemaining, cpTotal } from "./creationPoints";
 import { dpCost, dpRemaining, dpRemainingForLevel, dpRemainingForLevelExcluding, dpSpentForPurchase, maxAffordableDpSpend, maxDpForPurchase, unitsFromDpSpend } from "./developmentPoints";
-import { characterLevel, presence, syncLevels } from "./helpers";
+import { characterLevel, levelFromXp, presence, syncLevels, xpFromLevel } from "./helpers";
 import { createEmptyCharacter } from "../schema/character";
 import { parseCharacter, serializeCharacter } from "../persist/save";
 import { parseCharacterDocument } from "../persist/legacyMigration";
@@ -35,6 +35,14 @@ describe("tables", () => {
     const rookie = createEmptyCharacter();
     rookie.xp = -100;
     expect(characterLevel(rookie)).toBe(0);
+  });
+
+  it("maps milestone levels to the minimum XP for that level", () => {
+    expect(xpFromLevel(0)).toBe(-100);
+    expect(xpFromLevel(1)).toBe(0);
+    expect(xpFromLevel(2)).toBe(100);
+    expect(xpFromLevel(3)).toBe(225);
+    expect(levelFromXp(xpFromLevel(5))).toBe(5);
   });
 });
 
