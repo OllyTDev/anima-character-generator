@@ -523,6 +523,56 @@ function DevelopmentStep() {
 
   return (
     <section>
+      <h2>Development Points</h2>
+      <div className="form-grid">
+        <label>
+          Editing level
+          <select
+            value={selectedLevel}
+            onChange={(event) => setSelectedLevel(Number(event.target.value))}
+          >
+            {charLevel === 0 ? <option value={0}>Level 0</option> : null}
+            {Array.from({ length: charLevel }, (_, index) => (
+              <option key={index + 1} value={index + 1}>
+                Level {index + 1}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <p>
+        Level {selectedLevel} ({className}). DP left: total {Math.floor(current?.Total ?? 0)}, combat{" "}
+        {Math.floor(current?.Combat ?? 0)}, supernatural {Math.floor(current?.Supernatural ?? 0)}, psychic{" "}
+        {Math.floor(current?.Psychic ?? 0)}, other {Math.floor(current?.Other ?? 0)}. MK remaining {mkLeft}.
+      </p>
+
+      <div className="development-actions">
+        <button
+          type="button"
+          onClick={() => {
+            setSpendDpEdit(null);
+            setSpendDpOpen(true);
+          }}
+        >
+          Spend DP
+        </button>
+        <button type="button" onClick={() => setKiAbilitiesOpen(true)}>
+          Ki abilities
+        </button>
+        {selectedLevel > 0 ? (
+          <button type="button" onClick={() => setNaturalBonusOpen(true)}>
+            Choose a natural bonus at this level
+          </button>
+        ) : null}
+      </div>
+
+      {selectedLevel > 0 && selectedNaturalBonus ? (
+        <p className="muted">
+          Natural bonus: <strong>{selectedNaturalBonus}</strong> (+
+          {naturalBonusAmount(character, selectedNaturalBonus, selectedLevel)})
+        </p>
+      ) : null}
+
       <h2>Purchases for this character</h2>
       {character.levels.map((info, index) => (
         <div key={index} className="level-purchases">
@@ -577,56 +627,6 @@ function DevelopmentStep() {
           ))}
         </div>
       ))}
-
-      <h2>Development Points</h2>
-      <div className="form-grid">
-        <label>
-          Editing level
-          <select
-            value={selectedLevel}
-            onChange={(event) => setSelectedLevel(Number(event.target.value))}
-          >
-            {charLevel === 0 ? <option value={0}>Level 0</option> : null}
-            {Array.from({ length: charLevel }, (_, index) => (
-              <option key={index + 1} value={index + 1}>
-                Level {index + 1}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <p>
-        Level {selectedLevel} ({className}). DP left: total {Math.floor(current?.Total ?? 0)}, combat{" "}
-        {Math.floor(current?.Combat ?? 0)}, supernatural {Math.floor(current?.Supernatural ?? 0)}, psychic{" "}
-        {Math.floor(current?.Psychic ?? 0)}, other {Math.floor(current?.Other ?? 0)}. MK remaining {mkLeft}.
-      </p>
-
-      <div className="development-actions">
-        <button
-          type="button"
-          onClick={() => {
-            setSpendDpEdit(null);
-            setSpendDpOpen(true);
-          }}
-        >
-          Spend DP
-        </button>
-        <button type="button" onClick={() => setKiAbilitiesOpen(true)}>
-          Ki abilities
-        </button>
-        {selectedLevel > 0 ? (
-          <button type="button" onClick={() => setNaturalBonusOpen(true)}>
-            Choose a natural bonus at this level
-          </button>
-        ) : null}
-      </div>
-
-      {selectedLevel > 0 && selectedNaturalBonus ? (
-        <p className="muted">
-          Natural bonus: <strong>{selectedNaturalBonus}</strong> (+
-          {naturalBonusAmount(character, selectedNaturalBonus, selectedLevel)})
-        </p>
-      ) : null}
 
       <SpendDpDialog
         character={character}
