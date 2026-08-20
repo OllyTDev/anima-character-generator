@@ -44,7 +44,7 @@ const steps: { id: WizardStep; label: string }[] = [
 ];
 
 export function Wizard() {
-  const { character, step, setStep, patch, reset, exportJson, importJson, download, loadError, migrationNotice, dismissMigrationNotice } =
+  const { character, step, setStep, reset, exportJson, importJson, download, loadError, migrationNotice, dismissMigrationNotice } =
     useCharacterStore();
   const [newCharacterOpen, setNewCharacterOpen] = useState(false);
   const human = character.type === "Human";
