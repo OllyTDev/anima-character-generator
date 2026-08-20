@@ -7,6 +7,7 @@ import {
 import { classNames } from "../data/classes";
 import { essentialAbilities } from "../data/essentialAbilities";
 import { generationMethods } from "../data/generationMethods";
+import { KI_GENERATION_MODE_EXPLANATION, kiGenerationModes } from "../data/kiGenerationModes";
 import { levelModes } from "../data/levelModes";
 import { creatureTypes, genders, races } from "../data/lists";
 import { tables } from "../data/tables";
@@ -216,6 +217,28 @@ function TypeStep() {
             ? "Set XP on the Characteristics step; level is derived from the XP chart."
             : "Choose a level on the Characteristics step; XP is set automatically from that level."}
         </p>
+        <label>
+          Ki generation
+          <select
+            value={character.settings.kiGenerationMode}
+            onChange={(event) =>
+              patch((current) => ({
+                ...current,
+                settings: {
+                  ...current.settings,
+                  kiGenerationMode: event.target.value as typeof current.settings.kiGenerationMode,
+                },
+              }))
+            }
+          >
+            {kiGenerationModes.map((mode) => (
+              <option key={mode.id} value={mode.id}>
+                {mode.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="muted">{KI_GENERATION_MODE_EXPLANATION}</p>
       </div>
       <div className="actions">
         <button type="button" onClick={() => setStep(character.type === "Human" ? "basics" : "creature")}>

@@ -1,4 +1,5 @@
 import { classes } from "../data/classes";
+import { kiCharacteristics } from "../data/lists";
 import { kiAbilities, kiAbilityCost } from "../data/kiAbilities";
 import { martialArts } from "../data/martialArts";
 import type { CharacterDocument } from "../schema/character";
@@ -104,6 +105,16 @@ export function kiAccumulation(character: CharacterDocument, name: "STR" | "DEX"
     if (multiples?.[name]) total += multiples[name];
   }
   return total;
+}
+
+export function combinedKiPool(character: CharacterDocument): { max: number; perTurn: number } {
+  let max = 0;
+  let perTurn = 0;
+  for (const name of kiCharacteristics) {
+    max += kiPoints(character, name);
+    perTurn += kiAccumulation(character, name);
+  }
+  return { max, perTurn };
 }
 
 export function kiConcealment(character: CharacterDocument): number {

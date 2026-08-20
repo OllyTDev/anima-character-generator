@@ -10,6 +10,7 @@ import { parseCharacter, serializeCharacter } from "../persist/save";
 import { parseCharacterDocument } from "../persist/legacyMigration";
 import { kiAbilityCost } from "../data/kiAbilities";
 import { deriveSheet } from "./derived";
+import { combinedKiPool, addKiAbility } from "./martialKnowledge";
 
 function freelancer() {
   const character = createEmptyCharacter();
@@ -146,6 +147,19 @@ describe("ki house rules", () => {
   it("makes Use of Ki free under OllyT rules", () => {
     expect(kiAbilityCost("Use of Ki", false)).toBe(40);
     expect(kiAbilityCost("Use of Ki", true)).toBe(0);
+  });
+
+  it("sums separated ki pools into a combined pool for display", () => {
+    const character = createEmptyCharacter();
+    const separated = combinedKiPool(character);
+    expect(separated.max).toBeGreaterThan(0);
+    expect(separated.perTurn).toBe(6);
+
+    character.settings.kiGenerationMode = "combined";
+    const withKi = addKiAbility(character, "Use of Ki", 1);
+    const sheet = deriveSheet(withKi);
+    expect(sheet.kiCombined).toEqual(separated);
+    expect(sheet.kiGenerationMode).toBe("combined");
   });
 });
 

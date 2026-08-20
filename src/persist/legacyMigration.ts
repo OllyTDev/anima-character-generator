@@ -115,6 +115,10 @@ export function convertLegacyCharacter(data: unknown): CharacterDocument {
             data.settings.levelMode === "milestone"
               ? "milestone"
               : defaults.settings.levelMode,
+          kiGenerationMode:
+            data.settings.kiGenerationMode === "combined"
+              ? "combined"
+              : defaults.settings.kiGenerationMode,
         }
       : defaults.settings,
     name: asString(pickValue(data, "Name", "name")),

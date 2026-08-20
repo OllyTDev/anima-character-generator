@@ -36,6 +36,7 @@ import {
 } from "./magic";
 import {
   dominionTechniques,
+  combinedKiPool,
   kiAccumulation,
   kiConcealment,
   kiDetection,
@@ -126,6 +127,9 @@ export function deriveSheet(character: CharacterDocument) {
         { points: kiPoints(character, name), accumulation: kiAccumulation(character, name) },
       ]),
     ),
+    kiGenerationMode: character.settings.kiGenerationMode,
+    kiCombined:
+      character.settings.kiGenerationMode === "combined" ? combinedKiPool(character) : null,
     kiAbilities: listedKiAbilities(character),
     kiConcealment: kiConcealment(character),
     kiDetection: kiDetection(character),

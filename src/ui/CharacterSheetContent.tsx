@@ -1,6 +1,7 @@
 import { tables } from "../data/tables";
 import { useMemo, useState } from "react";
 import type { DerivedSheet } from "../engine/derived";
+import { KiPoolManager } from "./KiPoolManager";
 
 type CharacterSheetContentProps = {
   sheet: DerivedSheet;
@@ -73,7 +74,7 @@ export function CharacterSheetContent({ sheet, variant, showTitle = true }: Char
           {sheet.damageReduction ? <Stat label="Damage Reduction" value={sheet.damageReduction} /> : null}
         </div>
         <div className="sheet-subsection">
-          <h3>Unarmed</h3>
+          <h4 className="sheet-subtitle">Unarmed</h4>
           <p className="muted">
             Attack {sheet.unarmedAttack}, Block {sheet.unarmedBlock}, Dodge {sheet.unarmedDodge}, Initiative{" "}
             {sheet.unarmedInitiative}, Damage {sheet.unarmedDamage}
@@ -140,18 +141,34 @@ export function CharacterSheetContent({ sheet, variant, showTitle = true }: Char
       {sheet.usesKi && (
       <section className="sheet-section">
         <h2>Ki</h2>
-        <div className="ki-grid">
-          {Object.entries(sheet.ki).map(([name, value]) => (
-            <Stat key={name} label={name} value={`${value.points} / ${value.accumulation}`} />
-          ))}
-        </div>
-        {sheet.kiAbilities.length ? <p className="sheet-note">{sheet.kiAbilities.join(", ")}</p> : null}
         {full ? (
-          <div className="stat-grid stat-grid--wide">
-            <Stat label="Ki Concealment" value={sheet.kiConcealment} />
-            <Stat label="Ki Detection" value={sheet.kiDetection} />
+          <div className="sheet-subsection">
+            <h4 className="sheet-subtitle">Ki Passive Stats</h4>
+            <div className="stat-grid stat-grid--wide">
+              <Stat label="Ki Concealment" value={sheet.kiConcealment} />
+              <Stat label="Ki Detection" value={sheet.kiDetection} />
+            </div>
           </div>
         ) : null}
+        <div className="sheet-subsection">
+          <h4 className="sheet-subtitle">Ki accumulation</h4>
+          <div className={`ki-grid${sheet.kiGenerationMode === "combined" ? " ki-grid--combined" : ""}`}>
+            {sheet.kiGenerationMode === "combined" && sheet.kiCombined ? (
+              <KiStat name="Combined" max={sheet.kiCombined.max} perTurn={sheet.kiCombined.perTurn} />
+            ) : (
+              Object.entries(sheet.ki).map(([name, value]) => (
+                <KiStat key={name} name={name} max={value.points} perTurn={value.accumulation} />
+              ))
+            )}
+          </div>
+        </div>
+        {sheet.kiAbilities.length ? (
+          <div className="sheet-subsection">
+            <h4 className="sheet-subtitle">Ki Abilities</h4>
+            <p className="sheet-note">{sheet.kiAbilities.join(", ")}</p>
+          </div>
+        ) : null}
+        {full ? <KiPoolManager sheet={sheet} /> : null}
         {Object.keys(sheet.dominionTechniques).length ? (
           <div className="sheet-subsection">
             <h3>Dominion Techniques</h3>
@@ -277,6 +294,18 @@ function SecondaryAbilitiesSection({ sheet, full }: { sheet: DerivedSheet; full:
         );
       })}
     </section>
+  );
+}
+
+function KiStat({ name, max, perTurn }: { name: string; max: number; perTurn: number }) {
+  return (
+    <div className="ki-stat">
+      <strong className="ki-stat-name">{name}</strong>
+      <div className="ki-stat-detail">
+        <span className="ki-stat-line">Per Turn: {perTurn}</span>
+        <span className="ki-stat-line">Max: {max}</span>
+      </div>
+    </div>
   );
 }
 
