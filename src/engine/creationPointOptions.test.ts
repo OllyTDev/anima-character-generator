@@ -1,6 +1,6 @@
 import { createEmptyCharacter } from "../schema/character";
 import { addAdvantage } from "./creationPoints";
-import { buildAdvantageOptions, buildDisadvantageOptions, advantageEffectText } from "./creationPointOptions";
+import { buildAdvantageOptions, buildDisadvantageOptions, advantageEffectText, groupCreationPointsByCategory } from "./creationPointOptions";
 import { describe, expect, it } from "vitest";
 
 describe("creationPointOptions", () => {
@@ -29,5 +29,20 @@ describe("creationPointOptions", () => {
     const tabs = buildDisadvantageOptions(character);
     expect(tabs.Common.some((item) => item.name === "Klutzy")).toBe(true);
     expect(tabs.Magic.some((item) => item.name === "Magical Blockage")).toBe(true);
+  });
+
+  it("groups selected advantages and disadvantages by cp category", () => {
+    let character = createEmptyCharacter();
+    character = addAdvantage(character, "Quick Reflexes", 1);
+    character = addAdvantage(character, "Born Wizard", 1);
+    character.disadvantages.Klutzy = 1;
+
+    expect(groupCreationPointsByCategory(Object.keys(character.advantages), "advantage")).toEqual({
+      Common: ["Quick Reflexes"],
+      Magic: ["Born Wizard"],
+    });
+    expect(groupCreationPointsByCategory(Object.keys(character.disadvantages), "disadvantage")).toEqual({
+      Common: ["Klutzy"],
+    });
   });
 });

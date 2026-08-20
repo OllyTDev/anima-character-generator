@@ -21,7 +21,8 @@ import { mkPurchasesForLevel, mkRemaining, removeKiAbility } from "../engine/mar
 import type { Characteristic } from "../data/types";
 import type { CharacterDocument, LevelRecord } from "../schema/character";
 import { useCharacterStore, useSheet, type WizardStep } from "../store/characterStore";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { creationPointTabIds, groupCreationPointsByCategory } from "../engine/creationPointOptions";
 import { ChangeClassDialog } from "./ChangeClassDialog";
 import { CreationPointDialog } from "./CreationPointDialog";
 import { DialogBackdrop } from "./DialogBackdrop";
@@ -464,39 +465,83 @@ function PointsStep() {
   const { character, patch, setStep } = useCharacterStore();
   const [advantageOpen, setAdvantageOpen] = useState(false);
   const [disadvantageOpen, setDisadvantageOpen] = useState(false);
+  const advantagesByCategory = useMemo(
+    () => groupCreationPointsByCategory(Object.keys(character.advantages), "advantage"),
+    [character.advantages],
+  );
+  const disadvantagesByCategory = useMemo(
+    () => groupCreationPointsByCategory(Object.keys(character.disadvantages), "disadvantage"),
+    [character.disadvantages],
+  );
 
   return (
     <section>
       <h2>Creation Points</h2>
       <CpSummary />
-      <div className="actions">
-        <button type="button" onClick={() => setAdvantageOpen(true)}>
+      <div className="wizard-primary-actions">
+        <button type="button" className="wizard-continue" onClick={() => setAdvantageOpen(true)}>
           Add advantage
         </button>
-        <button type="button" onClick={() => setDisadvantageOpen(true)}>
+        <button type="button" className="wizard-continue wizard-continue--secondary" onClick={() => setDisadvantageOpen(true)}>
           Add disadvantage
         </button>
       </div>
-      <div className="list">
-        {Object.keys(character.advantages).map((name) => (
-          <div className="list-item" key={name}>
-            <span>{advantageSummary(character, name)}</span>
-            <button className="secondary" type="button" onClick={() => patch((current) => removeAdvantage(current, name))}>
-              Remove
-            </button>
-          </div>
-        ))}
-      </div>
-      <div className="list">
-        {Object.keys(character.disadvantages).map((name) => (
-          <div className="list-item" key={name}>
-            <span>{disadvantageSummary(character, name)}</span>
-            <button className="secondary" type="button" onClick={() => patch((current) => removeDisadvantage(current, name))}>
-              Remove
-            </button>
-          </div>
-        ))}
-      </div>
+      {Object.keys(character.advantages).length ? (
+        <section className="cp-list-section">
+          <h3>Advantages</h3>
+          {creationPointTabIds.map((category) => {
+            const names = advantagesByCategory[category];
+            if (!names?.length) return null;
+            return (
+              <div key={category} className="cp-list-category sheet-subsection">
+                <h4 className="sheet-subtitle">{category}</h4>
+                <div className="list">
+                  {names.map((name) => (
+                    <div className="list-item" key={name}>
+                      <span>{advantageSummary(character, name)}</span>
+                      <button
+                        className="secondary"
+                        type="button"
+                        onClick={() => patch((current) => removeAdvantage(current, name))}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      ) : null}
+      {Object.keys(character.disadvantages).length ? (
+        <section className="cp-list-section">
+          <h3>Disadvantages</h3>
+          {creationPointTabIds.map((category) => {
+            const names = disadvantagesByCategory[category];
+            if (!names?.length) return null;
+            return (
+              <div key={category} className="cp-list-category sheet-subsection">
+                <h4 className="sheet-subtitle">{category}</h4>
+                <div className="list">
+                  {names.map((name) => (
+                    <div className="list-item" key={name}>
+                      <span>{disadvantageSummary(character, name)}</span>
+                      <button
+                        className="secondary"
+                        type="button"
+                        onClick={() => patch((current) => removeDisadvantage(current, name))}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      ) : null}
       <CreationPointDialog
         character={character}
         kind="advantage"
