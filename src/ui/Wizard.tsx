@@ -11,7 +11,7 @@ import { KI_GENERATION_MODE_EXPLANATION, kiGenerationModes } from "../data/kiGen
 import { levelModes } from "../data/levelModes";
 import { creatureTypes, genders, races } from "../data/lists";
 import { tables } from "../data/tables";
-import { changeClass, dpRemaining, removeDp, setEvenLevelCharacteristic, setNaturalBonus, spendDp } from "../engine/developmentPoints";
+import { changeClass, classChangeAtLevel, dpRemaining, formatClassChangeLabel, removeDp, setEvenLevelCharacteristic, setNaturalBonus, spendDp } from "../engine/developmentPoints";
 import { hasEditableOption, dpDisplayCategories, dpDisplayCategoryLabel, groupDpPurchaseNames } from "../engine/dpPurchases";
 import { characteristicTotal } from "../engine/characteristics";
 import { characteristicPointLimit } from "../data/generationMethods";
@@ -21,6 +21,7 @@ import type { Characteristic } from "../data/types";
 import type { CharacterDocument, LevelRecord } from "../schema/character";
 import { useCharacterStore, useSheet, type WizardStep } from "../store/characterStore";
 import { useEffect, useState } from "react";
+import { ChangeClassDialog } from "./ChangeClassDialog";
 import { CreationPointDialog } from "./CreationPointDialog";
 import { DialogBackdrop } from "./DialogBackdrop";
 import { DpPurchaseItem } from "./DpPurchaseItem";
@@ -99,18 +100,6 @@ export function Wizard() {
         <button className="secondary" type="button" onClick={() => setNewCharacterOpen(true)}>
           New character
         </button>
-        <button
-          className="secondary"
-          type="button"
-          onClick={() =>
-            patch((current) => ({
-              ...current,
-              settings: { ...current.settings, ollyTRules: !current.settings.ollyTRules },
-            }))
-          }
-        >
-          OllyT rules: {character.settings.ollyTRules ? "on" : "off"}
-        </button>
       </div>
       </section>
       )}
@@ -178,19 +167,6 @@ function TypeStep() {
             ))}
           </select>
         </label>
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={character.settings.ollyTRules}
-            onChange={(event) =>
-              patch((current) => ({
-                ...current,
-                settings: { ...current.settings, ollyTRules: event.target.checked },
-              }))
-            }
-          />
-          <span>OllyT house rules</span>
-        </label>
         <label>
           How should character level be handled?
           <select
@@ -239,6 +215,19 @@ function TypeStep() {
           </select>
         </label>
         <p className="muted">{KI_GENERATION_MODE_EXPLANATION}</p>
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={character.settings.ollyTRules}
+            onChange={(event) =>
+              patch((current) => ({
+                ...current,
+                settings: { ...current.settings, ollyTRules: event.target.checked },
+              }))
+            }
+          />
+          <span>OllyT house rules</span>
+        </label>
       </div>
       <WizardContinueButton onClick={() => setStep(character.type === "Human" ? "basics" : "creature")} />
     </section>
@@ -433,17 +422,6 @@ function BasicsStep() {
             }}
           />
         </label>
-        <label>
-          Class
-          <select
-            value={character.levels[0].class}
-            onChange={(event) => patch((current) => changeClass(current, characterLevel(current) || 1, event.target.value))}
-          >
-            {classNames.map((name) => (
-              <option key={name}>{name}</option>
-            ))}
-          </select>
-        </label>
         {character.settings.levelMode === "milestone" ? (
           <label>
             Level
@@ -576,6 +554,7 @@ function DevelopmentStep() {
   } | null>(null);
   const [kiAbilitiesOpen, setKiAbilitiesOpen] = useState(false);
   const [naturalBonusOpen, setNaturalBonusOpen] = useState(false);
+  const [changeClassOpen, setChangeClassOpen] = useState(false);
   const remaining = dpRemaining(character);
   const levelIndex = remainingIndexForLevel(selectedLevel);
   const mkLeft = mkRemaining(character)[levelIndex] ?? mkRemaining(character).at(-1) ?? 0;
@@ -621,6 +600,7 @@ function DevelopmentStep() {
         const blockNaturalBonus = info.naturalBonus;
         const purchasesByCategory = groupDpPurchaseNames(Object.keys(info.dp));
         const mkEntries = mkPurchasesForLevel(character, index);
+        const classChange = classChangeAtLevel(character, level);
 
         return (
           <div
@@ -699,6 +679,40 @@ function DevelopmentStep() {
                     </select>
                   </label>
                 ) : null}
+                {selectedLevel <= 1 ? (
+                  <label className="level-editor-class">
+                    {charLevel === 0 ? "Class" : "Starting class"}
+                    <select
+                      value={info.class}
+                      onChange={(event) =>
+                        patch((currentChar) => changeClass(currentChar, selectedLevel || 1, event.target.value))
+                      }
+                    >
+                      {classNames.map((name) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <div className="level-class-panel">
+                    <p>
+                      Class at this level: <strong>{info.class}</strong>
+                      {classChange ? (
+                        <span className="muted">
+                          {" "}
+                          (changed from {classChange.previousClass}, {classChange.cost} DP from Other)
+                        </span>
+                      ) : (
+                        <span className="muted"> (same as level {selectedLevel - 1})</span>
+                      )}
+                    </p>
+                    <button type="button" onClick={() => setChangeClassOpen(true)}>
+                      Change class
+                    </button>
+                  </div>
+                )}
               </div>
             ) : null}
 
@@ -709,15 +723,34 @@ function DevelopmentStep() {
                 {naturalBonusAmount(character, info.naturalBonus, level)})
               </p>
             ) : null}
-            {!levelHasPurchases(character, info, index) ? <p className="muted">No purchases yet.</p> : null}
+            {!levelHasPurchases(character, info, index, classChange) ? (
+              <p className="muted">No purchases yet.</p>
+            ) : null}
             {dpDisplayCategories.map((category) => {
               const dpNames = purchasesByCategory[category];
               const categoryMkEntries = category === "MK" ? mkEntries : [];
-              if (!dpNames.length && !categoryMkEntries.length) return null;
+              const showClassChange = category === "Other" && classChange;
+              if (!dpNames.length && !categoryMkEntries.length && !showClassChange) return null;
 
               return (
                 <section key={category} className="level-purchase-category">
                   <h4>{dpDisplayCategoryLabel(category)}</h4>
+                  {showClassChange ? (
+                    <div className="list-item">
+                      <span>{formatClassChangeLabel(classChange)}</span>
+                      <div className="list-item-actions">
+                        <button
+                          className="secondary"
+                          type="button"
+                          onClick={() =>
+                            patch((currentChar) => changeClass(currentChar, level, classChange.previousClass))
+                          }
+                        >
+                          Revert to {classChange.previousClass}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                   {dpNames.map((name) => (
                     <DpPurchaseItem
                       key={name}
@@ -780,6 +813,17 @@ function DevelopmentStep() {
         onClose={() => setKiAbilitiesOpen(false)}
         onLearn={(next) => patch(() => next)}
       />
+      <ChangeClassDialog
+        character={character}
+        level={selectedLevel}
+        otherDpRemaining={Math.floor(remaining[remainingIndexForLevel(selectedLevel)]?.Other ?? 0)}
+        open={changeClassOpen}
+        onClose={() => setChangeClassOpen(false)}
+        onApply={(className) => {
+          patch((currentChar) => changeClass(currentChar, selectedLevel, className));
+          setChangeClassOpen(false);
+        }}
+      />
       <NaturalBonusDialog
         character={character}
         level={selectedLevel}
@@ -804,7 +848,13 @@ function levelLabel(index: number, charLevel: number, className: string): string
   return `${className} level ${index + 1}`;
 }
 
-function levelHasPurchases(character: CharacterDocument, info: LevelRecord, levelIndex: number): boolean {
+function levelHasPurchases(
+  character: CharacterDocument,
+  info: LevelRecord,
+  levelIndex: number,
+  classChange: ReturnType<typeof classChangeAtLevel>,
+): boolean {
+  if (classChange) return true;
   if (Object.keys(info.dp).length > 0) return true;
   if (mkPurchasesForLevel(character, levelIndex).length > 0) return true;
   return false;

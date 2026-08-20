@@ -16,7 +16,11 @@ export { addAdvantage, addDisadvantage, advantageAllowed, cpRemaining, cpTotal, 
 export { deriveSheet } from "./derived";
 export {
   changeClass,
+  classChangeAffordable,
+  classChangeAtLevel,
+  classChangeCostBetween,
   classChangeDp,
+  formatClassChangeLabel,
   dpCost,
   dpRemaining,
   dpRemainingForLevel,

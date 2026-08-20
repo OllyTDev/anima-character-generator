@@ -964,6 +964,32 @@ textarea { min-height: 10rem; width: 100%; }
   max-width: 16rem;
 }
 
+.level-editor-class,
+.level-class-panel {
+  margin-top: 0.75rem;
+  max-width: 20rem;
+}
+
+.level-class-panel p {
+  margin: 0 0 0.55rem;
+}
+
+.change-class-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.change-class-body label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.change-class-cost {
+  margin: 0;
+}
+
 .development-actions {
   display: flex;
   flex-wrap: wrap;

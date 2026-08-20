@@ -3,7 +3,7 @@ import { tables } from "../data/tables";
 import { ability } from "./ability";
 import { characteristic, lifePoints, modifier, characteristicPointValue, characteristicTotal } from "./characteristics";
 import { addAdvantage, addDisadvantage, cpRemaining, cpTotal } from "./creationPoints";
-import { dpCost, dpRemaining, dpRemainingForLevel, dpRemainingForLevelExcluding, dpSpentForPurchase, maxAffordableDpSpend, maxDpForPurchase, unitsFromDpSpend } from "./developmentPoints";
+import { dpCost, dpRemaining, dpRemainingForLevel, dpRemainingForLevelExcluding, dpSpentForPurchase, maxAffordableDpSpend, maxDpForPurchase, unitsFromDpSpend, classChangeAtLevel } from "./developmentPoints";
 import { characterLevel, levelFromXp, presence, syncLevels, xpFromLevel } from "./helpers";
 import { createEmptyCharacter } from "../schema/character";
 import { parseCharacter, serializeCharacter } from "../persist/save";
@@ -92,6 +92,31 @@ describe("characteristics and ability", () => {
     const character = freelancer();
     character.levels[0].dp.Notice = 5;
     expect(ability(character, "Notice")).toBe(0);
+  });
+});
+
+describe("class changes", () => {
+  it("charges 60 DP for an unrelated class change at level 2", () => {
+    const character = createEmptyCharacter();
+    character.levels[0].class = "Warrior";
+    character.levels.push({ class: "Wizard", dp: {} });
+    character.xp = 0;
+    const synced = syncLevels({ ...character, xp: xpFromLevel(2) });
+    expect(classChangeAtLevel(synced, 2)).toEqual({
+      previousClass: "Warrior",
+      className: "Wizard",
+      cost: 60,
+    });
+    expect(synced.levels[1].class).toBe("Wizard");
+  });
+
+  it("does not charge when continuing the same class", () => {
+    const character = syncLevels(createEmptyCharacter());
+    character.levels[0].class = "Warrior";
+    character.xp = xpFromLevel(2);
+    const synced = syncLevels(character);
+    synced.levels[1].class = "Warrior";
+    expect(classChangeAtLevel(synced, 2)).toBeNull();
   });
 });
 

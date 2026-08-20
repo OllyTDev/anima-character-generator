@@ -20,19 +20,64 @@ export function bonusDpFromGnosis(gnosis: number | undefined): number {
   return 0;
 }
 
-export function classChangeDp(character: CharacterDocument, level: number): number {
-  if (level < 2) return 0;
-  const thisClass = character.levels[level - 1].class;
-  const lastClass = character.levels[level - 2].class;
-  if (thisClass === lastClass) return 0;
-  const thisTypes = classes[thisClass].Archetypes;
-  const lastTypes = classes[lastClass].Archetypes;
+export function classChangeCostBetween(
+  character: CharacterDocument,
+  fromClass: string,
+  toClass: string,
+): number {
+  if (fromClass === toClass) return 0;
+  const thisTypes = classes[toClass].Archetypes;
+  const lastTypes = classes[fromClass].Archetypes;
   let cost = 60;
-  if (thisClass === "Freelancer" || lastClass === "Freelancer") cost = 20;
+  if (toClass === "Freelancer" || fromClass === "Freelancer") cost = 20;
   else if (thisTypes.length === 1 && lastTypes.length === 1 && thisTypes[0] === lastTypes[0]) cost = 20;
   else if (intersection([...thisTypes], [...lastTypes]).length > 0) cost = 40;
   if ("Versatile" in character.advantages) cost /= 2;
   return cost;
+}
+
+export function classChangeDp(character: CharacterDocument, level: number): number {
+  if (level < 2) return 0;
+  const thisClass = character.levels[level - 1].class;
+  const lastClass = character.levels[level - 2].class;
+  return classChangeCostBetween(character, lastClass, thisClass);
+}
+
+export type ClassChangePurchase = {
+  previousClass: string;
+  className: string;
+  cost: number;
+};
+
+export function classChangeAtLevel(character: CharacterDocument, level: number): ClassChangePurchase | null {
+  if (level < 2) return null;
+  const previousClass = character.levels[level - 2]?.class;
+  const className = character.levels[level - 1]?.class;
+  if (!previousClass || !className || previousClass === className) return null;
+  return {
+    previousClass,
+    className,
+    cost: classChangeDp(character, level),
+  };
+}
+
+export function formatClassChangeLabel(change: ClassChangePurchase): string {
+  return `Class change (${change.previousClass} → ${change.className}): ${change.cost} DP`;
+}
+
+export function classChangeAffordable(
+  character: CharacterDocument,
+  level: number,
+  targetClass: string,
+  remainingOther: number,
+): boolean {
+  if (level < 2) return true;
+  const previousClass = character.levels[level - 2]?.class;
+  if (!previousClass) return true;
+  const current = classChangeAtLevel(character, level);
+  const nextCost = classChangeCostBetween(character, previousClass, targetClass);
+  const currentCost = current?.cost ?? 0;
+  return nextCost - currentCost <= remainingOther;
 }
 
 export function dpCost(character: CharacterDocument, abilityName: string, className: string, degree?: string): number {
