@@ -24,6 +24,6 @@ export const creatureTypes = [
   "Spirit, Undead",
 ] as const;
 
-export const genders = ["Female", "Male", "Non-Binary"] as const;
+export const genders = ["Female", "Male", "Non-Binary", "Other"] as const;
 
 export const kiCharacteristics = ["STR", "DEX", "AGI", "CON", "POW", "WP"] as const;

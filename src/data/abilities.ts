@@ -108,6 +108,28 @@ export const abilities: Record<string, AbilityDef> = {
   "Withstand Pain": { Field: "Vigor", Characteristic: "WP" },
 };
 
+export function abilitySupportsSpecialization(name: string): boolean {
+  const def = abilities[name];
+  return Boolean(def?.specializations?.length);
+}
+
+export function specializationSuggestions(name: string): readonly string[] {
+  return abilities[name]?.specializations ?? [];
+}
+
+/** Map stored text to a canonical suggestion when it matches case-insensitively. */
+export function resolveSpecializationChoice(name: string, value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const match = specializationSuggestions(name).find((item) => item.toLowerCase() === trimmed.toLowerCase());
+  return match ?? trimmed;
+}
+
+export function specializationSelectValue(name: string, stored: string | undefined): string {
+  if (!stored?.trim()) return "";
+  return resolveSpecializationChoice(name, stored);
+}
+
 export function secondaryAbilities(ollyTRules: boolean): string[] {
   return Object.keys(abilities).filter((name) => {
     const ability = abilities[name];

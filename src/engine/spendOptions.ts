@@ -160,6 +160,20 @@ export function buildSpendTabs(character: CharacterDocument, className: string):
   };
 }
 
+export function findSpendOption(
+  tabs: Record<SpendTabId, SpendSection[]>,
+  name: string,
+): { tab: SpendTabId; option: SpendOption } | null {
+  for (const tab of spendTabIds) {
+    for (const spendSection of tabs[tab]) {
+      for (const item of spendSection.items) {
+        if (item.name === name) return { tab, option: item };
+      }
+    }
+  }
+  return null;
+}
+
 /** @deprecated Use buildSpendTabs instead. */
 export function buildSpendOptions(character: CharacterDocument, className: string): Record<PrimaryCategory, SpendOption[]> {
   const tabs = buildSpendTabs(character, className);

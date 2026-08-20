@@ -1,41 +1,107 @@
 import {
   buildSpendTabs,
+  findSpendOption,
   martialArtDegrees,
   spendTabIds,
   type SpendOption,
   type SpendTabId,
 } from "../engine/spendOptions";
 import { combatModules } from "../data/combatModules";
-import { dpCost, spendDp } from "../engine/developmentPoints";
+import {
+  dpCost,
+  dpRemainingForLevel,
+  dpRemainingForLevelExcluding,
+  dpSpentForPurchase,
+  maxAffordableDpSpend,
+  maxDpForPurchase,
+  spendDp,
+  unitsFromDpSpend,
+} from "../engine/developmentPoints";
 import type { CharacterDocument } from "../schema/character";
 import { useEffect, useMemo, useState } from "react";
 import { DialogBackdrop } from "./DialogBackdrop";
 import { NumberInput } from "./NumberInput";
+
+type SpendDpEdit = {
+  name: string;
+  value: unknown;
+};
 
 type SpendDpDialogProps = {
   character: CharacterDocument;
   level: number;
   className: string;
   open: boolean;
+  editPurchase?: SpendDpEdit | null;
   onClose: () => void;
   onSpend: (character: CharacterDocument) => void;
 };
 
-export function SpendDpDialog({ character, level, className, open, onClose, onSpend }: SpendDpDialogProps) {
+function categoryRemainingLabel(tab: SpendTabId, remaining: Record<string, number>): string {
+  const value = Math.floor(remaining[tab] ?? 0);
+  return `${tab} ${value}`;
+}
+
+function isValidDpSpend(dpToSpend: number | null, unitCost: number, maxDp: number): boolean {
+  if (dpToSpend === null || dpToSpend < unitCost || dpToSpend > maxDp) return false;
+  return dpToSpend % unitCost === 0;
+}
+
+export function SpendDpDialog({
+  character,
+  level,
+  className,
+  open,
+  editPurchase = null,
+  onClose,
+  onSpend,
+}: SpendDpDialogProps) {
   const [activeTab, setActiveTab] = useState<SpendTabId>("Combat");
   const [selected, setSelected] = useState<SpendOption | null>(null);
-  const [amount, setAmount] = useState<number | null>(10);
+  const [dpToSpend, setDpToSpend] = useState<number | null>(null);
   const tabs = useMemo(() => buildSpendTabs(character, className), [character, className]);
+  const editingName = editPurchase?.name ?? null;
+  const usesEditBudget = editingName !== null && selected?.name === editingName;
+  const levelRemaining = useMemo(() => {
+    if (usesEditBudget) {
+      return dpRemainingForLevelExcluding(character, level, editingName);
+    }
+    return dpRemainingForLevel(character, level);
+  }, [character, level, editingName, usesEditBudget]);
 
   useEffect(() => {
-    if (open) {
-      setActiveTab("Combat");
-      setSelected(null);
-      setAmount(10);
+    if (!open) return;
+    if (editPurchase) {
+      const found = findSpendOption(tabs, editPurchase.name);
+      if (found) {
+        setActiveTab(found.tab);
+        setSelected(found.option);
+        if (found.option.kind === "dp") {
+          setDpToSpend(dpSpentForPurchase(character, editPurchase.name, editPurchase.value, className));
+        } else {
+          setDpToSpend(null);
+        }
+        return;
+      }
     }
-  }, [open]);
+    setActiveTab("Combat");
+    setSelected(null);
+    setDpToSpend(null);
+  }, [open, editPurchase, tabs, character, className]);
 
   if (!open) return null;
+
+  const isEditing = editPurchase !== null;
+  const totalRemaining = Math.floor(levelRemaining.Total ?? 0);
+  const tabRemaining = Math.floor(levelRemaining[activeTab] ?? 0);
+  const selectedMaxDp = selected ? maxDpForPurchase(levelRemaining, selected.name) : 0;
+  const selectedMaxAffordable =
+    selected?.kind === "dp" ? maxAffordableDpSpend(selectedMaxDp, selected.cost) : 0;
+  const canAffordSelected =
+    selected !== null &&
+    (selected.kind === "dp"
+      ? isValidDpSpend(dpToSpend, selected.cost, selectedMaxDp)
+      : selected.cost <= selectedMaxDp);
 
   const applySpend = (next: CharacterDocument) => {
     onSpend(next);
@@ -43,9 +109,10 @@ export function SpendDpDialog({ character, level, className, open, onClose, onSp
   };
 
   const confirmSimpleSpend = () => {
-    if (!selected) return;
+    if (!selected || !canAffordSelected) return;
     if (selected.kind === "dp") {
-      applySpend(spendDp(character, level || 1, selected.name, amount!));
+      const units = unitsFromDpSpend(dpToSpend!, selected.cost);
+      applySpend(spendDp(character, level || 1, selected.name, units));
       return;
     }
     if (selected.kind === "module") {
@@ -56,12 +123,14 @@ export function SpendDpDialog({ character, level, className, open, onClose, onSp
 
   const confirmMartialDegree = (degree: string) => {
     if (!selected || selected.kind !== "martial-art") return;
+    const cost = dpCost(character, selected.name, className, degree);
+    if (cost > maxDpForPurchase(levelRemaining, selected.name)) return;
     applySpend(spendDp(character, level || 1, selected.name, [degree]));
   };
 
   const selectOption = (item: SpendOption) => {
     setSelected(item);
-    if (item.kind === "dp") setAmount(item.cost);
+    if (item.kind === "dp") setDpToSpend(item.cost);
   };
 
   return (
@@ -74,90 +143,116 @@ export function SpendDpDialog({ character, level, className, open, onClose, onSp
       >
         <header className="dialog-header natural-bonus-dialog-header">
           <div className="natural-bonus-dialog-header-top">
-            <h2 id="spend-dp-title">Spend development points</h2>
+            <h2 id="spend-dp-title">
+              {isEditing ? `Edit ${editPurchase.name}` : "Spend development points"}
+            </h2>
           </div>
-          <p className="muted">Level {level} ({className}). Choose a category, then select what to buy.</p>
+          <p className="muted">
+            Level {level} ({className}). Total DP remaining {totalRemaining} (
+            {spendTabIds.map((tab) => categoryRemainingLabel(tab, levelRemaining)).join(", ")}).
+            {usesEditBudget ? " Current spend on this purchase is excluded from the totals above." : null}
+          </p>
         </header>
 
-        <nav className="spend-dp-tabs" role="tablist" aria-label="DP categories">
-          {spendTabIds.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab}
-              className={activeTab === tab ? "active" : ""}
-              onClick={() => {
-                setActiveTab(tab);
-                setSelected(null);
-              }}
-            >
-              {tab}
-            </button>
-          ))}
-        </nav>
+        {!isEditing ? (
+          <>
+            <nav className="spend-dp-tabs" role="tablist" aria-label="DP categories">
+              {spendTabIds.map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === tab}
+                  className={activeTab === tab ? "active" : ""}
+                  onClick={() => {
+                    setActiveTab(tab);
+                    setSelected(null);
+                    setDpToSpend(null);
+                  }}
+                >
+                  {tab} ({Math.floor(levelRemaining[tab] ?? 0)})
+                </button>
+              ))}
+            </nav>
 
-        <div className="spend-dp-fields spend-dp-tab-panel" role="tabpanel">
-          {tabs[activeTab].map((spendSection) => (
-            <section key={spendSection.id} className="spend-dp-section">
-              <h3>{spendSection.label}</h3>
-              <table className="spend-dp-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Cost</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {spendSection.items.map((item) => {
-                    const isSelected = selected?.name === item.name && selected.kind === item.kind;
-                    return (
-                      <tr
-                        key={`${item.kind}-${item.name}`}
-                        className={isSelected ? "spend-dp-row--selected" : ""}
-                        onClick={() => {
-                          setSelected(item);
-                          if (item.kind === "dp") setAmount(item.cost);
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            selectOption(item);
-                          }
-                        }}
-                        tabIndex={0}
-                        role="button"
-                        aria-pressed={isSelected}
-                      >
-                        <td>{item.name}</td>
-                        <td>
-                          {item.cost} {item.unit}
-                        </td>
+            <div className="spend-dp-fields spend-dp-tab-panel" role="tabpanel">
+              {tabs[activeTab].map((spendSection) => (
+                <section key={spendSection.id} className="spend-dp-section">
+                  <h3>{spendSection.label}</h3>
+                  <table className="spend-dp-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Cost</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </section>
-          ))}
-        </div>
+                    </thead>
+                    <tbody>
+                      {spendSection.items.map((item) => {
+                        const isSelected = selected?.name === item.name && selected.kind === item.kind;
+                        const itemMaxDp = maxDpForPurchase(levelRemaining, item.name);
+                        const affordable = itemMaxDp >= item.cost;
+                        return (
+                          <tr
+                            key={`${item.kind}-${item.name}`}
+                            className={`${isSelected ? "spend-dp-row--selected" : ""}${affordable ? "" : " spend-dp-row--disabled"}`}
+                            onClick={() => selectOption(item)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                selectOption(item);
+                              }
+                            }}
+                            tabIndex={0}
+                            role="button"
+                            aria-pressed={isSelected}
+                          >
+                            <td>{item.name}</td>
+                            <td>
+                              {item.cost} {item.unit}
+                              {!affordable ? <span className="muted"> — insufficient DP</span> : null}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </section>
+              ))}
+            </div>
+          </>
+        ) : null}
 
         <footer className="dialog-footer spend-dp-footer">
           {!selected ? (
-            <p className="muted spend-dp-hint">Select an option above to spend.</p>
+            <p className="muted spend-dp-hint">
+              {activeTab} DP remaining: {tabRemaining}. Select an option above to spend.
+            </p>
           ) : selected.kind === "dp" ? (
             <div className="spend-dp-confirm">
+              <p className="muted">
+                Up to {selectedMaxAffordable} DP available for {selected.name} ({selected.cost} DP per point).
+              </p>
               <label>
-                {selected.name} — {selected.cost} DP each
+                DP to spend
                 <NumberInput
                   min={selected.cost}
+                  max={selectedMaxAffordable || undefined}
                   step={selected.cost}
-                  value={amount}
-                  onChange={setAmount}
+                  value={dpToSpend}
+                  onChange={setDpToSpend}
                 />
               </label>
-              <button type="button" disabled={amount === null} onClick={confirmSimpleSpend}>
-                Spend {amount ?? 0} DP on {selected.name}
+              {dpToSpend !== null && dpToSpend > selectedMaxDp ? (
+                <p className="ki-tree-footer-warning">
+                  Not enough DP. You entered {dpToSpend} DP but only {selectedMaxDp} DP are available.
+                </p>
+              ) : dpToSpend !== null && dpToSpend % selected.cost !== 0 ? (
+                <p className="ki-tree-footer-warning">
+                  Spend must be in increments of {selected.cost} DP.
+                </p>
+              ) : null}
+              <button type="button" disabled={!canAffordSelected} onClick={confirmSimpleSpend}>
+                {isEditing ? "Update" : "Spend"} {dpToSpend ?? 0} DP on {selected.name}
               </button>
             </div>
           ) : selected.kind === "module" ? (
@@ -166,8 +261,14 @@ export function SpendDpDialog({ character, level, className, open, onClose, onSp
                 Add <strong>{selected.name}</strong> ({selected.cost} DP)
                 {selected.detail ? <span className="muted"> — {selected.detail}</span> : null}
               </p>
-              <button type="button" onClick={confirmSimpleSpend}>
-                Add module
+              <p className="muted">Up to {selectedMaxDp} DP available for this purchase.</p>
+              {selected.cost > selectedMaxDp ? (
+                <p className="ki-tree-footer-warning">
+                  Not enough DP. This module costs {selected.cost} DP but only {selectedMaxDp} DP are available.
+                </p>
+              ) : null}
+              <button type="button" disabled={!canAffordSelected} onClick={confirmSimpleSpend}>
+                Add module ({selected.cost} DP)
               </button>
             </div>
           ) : selected.kind === "martial-art" ? (
@@ -175,12 +276,22 @@ export function SpendDpDialog({ character, level, className, open, onClose, onSp
               <p>
                 Learn <strong>{selected.name}</strong>
               </p>
+              <p className="muted">Up to {selectedMaxDp} DP available for this purchase.</p>
               <div className="spend-dp-degrees">
-                {martialArtDegrees(selected.name).map((degree) => (
-                  <button key={degree} type="button" onClick={() => confirmMartialDegree(degree)}>
-                    {degree} ({dpCost(character, selected.name, className, degree)} DP)
-                  </button>
-                ))}
+                {martialArtDegrees(selected.name).map((degree) => {
+                  const cost = dpCost(character, selected.name, className, degree);
+                  const affordable = cost <= selectedMaxDp;
+                  return (
+                    <button
+                      key={degree}
+                      type="button"
+                      disabled={!affordable}
+                      onClick={() => confirmMartialDegree(degree)}
+                    >
+                      {degree} ({cost} DP)
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ) : null}

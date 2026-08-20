@@ -101,3 +101,24 @@ export function buildDisadvantageOptions(character: CharacterDocument): Record<C
 export function creationPointCostLabel(option: CreationPointOption): string {
   return formatValues(option.values, option.unit);
 }
+
+export function creationPointCategory(kind: "advantage" | "disadvantage", name: string): CreationPointTabId {
+  const def = kind === "advantage" ? advantages[name] : disadvantages[name];
+  return tabForCategory(def?.Category);
+}
+
+export function groupCreationPointsByCategory(
+  names: string[],
+  kind: "advantage" | "disadvantage",
+): Partial<Record<CreationPointTabId, string[]>> {
+  const grouped: Partial<Record<CreationPointTabId, string[]>> = {};
+  for (const name of names) {
+    const tab = creationPointCategory(kind, name);
+    grouped[tab] ??= [];
+    grouped[tab]!.push(name);
+  }
+  for (const tab of creationPointTabIds) {
+    grouped[tab]?.sort((left, right) => left.localeCompare(right));
+  }
+  return grouped;
+}

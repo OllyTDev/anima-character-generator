@@ -1,6 +1,7 @@
 import { tables } from "../data/tables";
 import { useMemo, useState } from "react";
 import type { DerivedSheet } from "../engine/derived";
+import { KiPoolManager } from "./KiPoolManager";
 
 type CharacterSheetContentProps = {
   sheet: DerivedSheet;
@@ -73,7 +74,7 @@ export function CharacterSheetContent({ sheet, variant, showTitle = true }: Char
           {sheet.damageReduction ? <Stat label="Damage Reduction" value={sheet.damageReduction} /> : null}
         </div>
         <div className="sheet-subsection">
-          <h3>Unarmed</h3>
+          <h4 className="sheet-subtitle">Unarmed</h4>
           <p className="muted">
             Attack {sheet.unarmedAttack}, Block {sheet.unarmedBlock}, Dodge {sheet.unarmedDodge}, Initiative{" "}
             {sheet.unarmedInitiative}, Damage {sheet.unarmedDamage}
@@ -140,18 +141,34 @@ export function CharacterSheetContent({ sheet, variant, showTitle = true }: Char
       {sheet.usesKi && (
       <section className="sheet-section">
         <h2>Ki</h2>
-        <div className="ki-grid">
-          {Object.entries(sheet.ki).map(([name, value]) => (
-            <Stat key={name} label={name} value={`${value.points} / ${value.accumulation}`} />
-          ))}
-        </div>
-        {sheet.kiAbilities.length ? <p className="sheet-note">{sheet.kiAbilities.join(", ")}</p> : null}
         {full ? (
-          <div className="stat-grid stat-grid--wide">
-            <Stat label="Ki Concealment" value={sheet.kiConcealment} />
-            <Stat label="Ki Detection" value={sheet.kiDetection} />
+          <div className="sheet-subsection">
+            <h4 className="sheet-subtitle">Ki Passive Stats</h4>
+            <div className="stat-grid stat-grid--wide">
+              <Stat label="Ki Concealment" value={sheet.kiConcealment} />
+              <Stat label="Ki Detection" value={sheet.kiDetection} />
+            </div>
           </div>
         ) : null}
+        <div className="sheet-subsection">
+          <h4 className="sheet-subtitle">Ki accumulation</h4>
+          <div className={`ki-grid${sheet.kiGenerationMode === "combined" ? " ki-grid--combined" : ""}`}>
+            {sheet.kiGenerationMode === "combined" && sheet.kiCombined ? (
+              <KiStat name="Combined" max={sheet.kiCombined.max} perTurn={sheet.kiCombined.perTurn} />
+            ) : (
+              Object.entries(sheet.ki).map(([name, value]) => (
+                <KiStat key={name} name={name} max={value.points} perTurn={value.accumulation} />
+              ))
+            )}
+          </div>
+        </div>
+        {sheet.kiAbilities.length ? (
+          <div className="sheet-subsection">
+            <h4 className="sheet-subtitle">Ki Abilities</h4>
+            <p className="sheet-note">{sheet.kiAbilities.join(", ")}</p>
+          </div>
+        ) : null}
+        {full ? <KiPoolManager sheet={sheet} /> : null}
         {Object.keys(sheet.dominionTechniques).length ? (
           <div className="sheet-subsection">
             <h3>Dominion Techniques</h3>
@@ -227,13 +244,32 @@ function SecondaryAbilitiesSection({ sheet, full }: { sheet: DerivedSheet; full:
     return byField;
   }, [sheet.secondaries]);
 
+  const trained = useMemo(() => sheet.secondaries.filter((item) => item.trained), [sheet.secondaries]);
+  const untrained = useMemo(() => sheet.secondaries.filter((item) => !item.trained), [sheet.secondaries]);
+
   const filteredAlphabetical = useMemo(() => {
     const sorted = [...sheet.secondaries].sort((a, b) => a.name.localeCompare(b.name));
     if (!normalizedQuery) return sorted;
     return sorted.filter((item) => item.name.toLowerCase().includes(normalizedQuery));
   }, [normalizedQuery, sheet.secondaries]);
 
+  const trainedByField = useMemo(() => {
+    const byField = Object.fromEntries(tables.fields.map((field) => [field, [] as typeof trained])) as Record<
+      string,
+      typeof trained
+    >;
+    for (const item of trained) {
+      byField[item.field]?.push(item);
+    }
+    for (const field of tables.fields) {
+      byField[field].sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return byField;
+  }, [trained]);
+
   if (full) {
+    const searching = normalizedQuery.length > 0;
+
     return (
       <section className="sheet-section sheet-section--secondaries-full">
         <h2>Secondary Abilities</h2>
@@ -246,14 +282,55 @@ function SecondaryAbilitiesSection({ sheet, full }: { sheet: DerivedSheet; full:
             placeholder="Type to filter..."
           />
         </label>
-        {filteredAlphabetical.length ? (
-          <div className="sec-grid sec-grid--full">
-            {filteredAlphabetical.map((item) => (
-              <Stat key={item.name} label={item.name} value={item.score} />
-            ))}
-          </div>
+        {searching ? (
+          filteredAlphabetical.length ? (
+            <div className="sec-grid sec-grid--full">
+              {filteredAlphabetical.map((item) => (
+                <Stat key={item.name} label={secondaryAbilityLabel(item.name, item.specialization)} value={item.score} />
+              ))}
+            </div>
+          ) : (
+            <p className="muted">No abilities match your search.</p>
+          )
         ) : (
-          <p className="muted">No abilities match your search.</p>
+          <>
+            {trained.length ? (
+              tables.fields.map((field) => {
+                const items = trainedByField[field];
+                if (!items.length) return null;
+                return (
+                  <div key={field} className="sheet-subsection">
+                    <h4 className="sheet-subtitle">{field}</h4>
+                    <div className="sec-grid sec-grid--full">
+                      {items.map((item) => (
+                        <Stat
+                          key={item.name}
+                          label={secondaryAbilityLabel(item.name, item.specialization)}
+                          value={item.score}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="muted sheet-note">No secondary abilities have development points spent yet.</p>
+            )}
+            {untrained.length ? (
+              <details className="secondary-untrained">
+                <summary className="secondary-untrained-toggle sheet-subtitle">
+                  Untrained abilities ({untrained.length})
+                </summary>
+                <div className="secondary-untrained-body">
+                  <div className="sec-grid sec-grid--full">
+                    {untrained.map((item) => (
+                      <Stat key={item.name} label={secondaryAbilityLabel(item.name, item.specialization)} value={item.score} />
+                    ))}
+                  </div>
+                </div>
+              </details>
+            ) : null}
+          </>
         )}
       </section>
     );
@@ -270,13 +347,33 @@ function SecondaryAbilitiesSection({ sheet, full }: { sheet: DerivedSheet; full:
             <h3>{field}</h3>
             <div className="sec-grid">
               {items.map((item) => (
-                <Stat key={item.name} label={item.name} value={item.score} />
+                <Stat
+                  key={item.name}
+                  label={secondaryAbilityLabel(item.name, item.specialization)}
+                  value={item.score}
+                />
               ))}
             </div>
           </div>
         );
       })}
     </section>
+  );
+}
+
+function secondaryAbilityLabel(name: string, specialization?: string): string {
+  return specialization ? `${name} (${specialization})` : name;
+}
+
+function KiStat({ name, max, perTurn }: { name: string; max: number; perTurn: number }) {
+  return (
+    <div className="ki-stat">
+      <strong className="ki-stat-name">{name}</strong>
+      <div className="ki-stat-detail">
+        <span className="ki-stat-line">Per Turn: {perTurn}</span>
+        <span className="ki-stat-line">Max: {max}</span>
+      </div>
+    </div>
   );
 }
 

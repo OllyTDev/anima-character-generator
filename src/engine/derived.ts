@@ -3,7 +3,7 @@ import { kiCharacteristics } from "../data/lists";
 import { tables } from "../data/tables";
 import type { Characteristic } from "../data/types";
 import type { CharacterDocument } from "../schema/character";
-import { ability } from "./ability";
+import { ability, secondaryHasInvestment } from "./ability";
 import {
   appearance,
   characteristic,
@@ -36,6 +36,7 @@ import {
 } from "./magic";
 import {
   dominionTechniques,
+  combinedKiPool,
   kiAccumulation,
   kiConcealment,
   kiDetection,
@@ -126,6 +127,9 @@ export function deriveSheet(character: CharacterDocument) {
         { points: kiPoints(character, name), accumulation: kiAccumulation(character, name) },
       ]),
     ),
+    kiGenerationMode: character.settings.kiGenerationMode,
+    kiCombined:
+      character.settings.kiGenerationMode === "combined" ? combinedKiPool(character) : null,
     kiAbilities: listedKiAbilities(character),
     kiConcealment: kiConcealment(character),
     kiDetection: kiDetection(character),
@@ -134,6 +138,8 @@ export function deriveSheet(character: CharacterDocument) {
       name,
       field: abilities[name].Field!,
       score: ability(character, name),
+      trained: secondaryHasInvestment(character, name),
+      specialization: character.specializations?.[name],
     })),
     advantages: Object.keys(character.advantages).map((name) => advantageSummary(character, name)),
     disadvantages: Object.keys(character.disadvantages).map((name) => disadvantageSummary(character, name)),

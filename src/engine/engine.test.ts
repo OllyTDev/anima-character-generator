@@ -3,13 +3,14 @@ import { tables } from "../data/tables";
 import { ability } from "./ability";
 import { characteristic, lifePoints, modifier, characteristicPointValue, characteristicTotal } from "./characteristics";
 import { addAdvantage, addDisadvantage, cpRemaining, cpTotal } from "./creationPoints";
-import { dpCost, dpRemaining } from "./developmentPoints";
-import { characterLevel, presence, syncLevels } from "./helpers";
+import { dpCost, dpRemaining, dpRemainingForLevel, dpRemainingForLevelExcluding, dpSpentForPurchase, maxAffordableDpSpend, maxDpForPurchase, unitsFromDpSpend, classChangeAtLevel } from "./developmentPoints";
+import { characterLevel, levelFromXp, presence, syncLevels, xpFromLevel } from "./helpers";
 import { createEmptyCharacter } from "../schema/character";
 import { parseCharacter, serializeCharacter } from "../persist/save";
 import { parseCharacterDocument } from "../persist/legacyMigration";
 import { kiAbilityCost } from "../data/kiAbilities";
 import { deriveSheet } from "./derived";
+import { combinedKiPool, addKiAbility } from "./martialKnowledge";
 
 function freelancer() {
   const character = createEmptyCharacter();
@@ -35,6 +36,14 @@ describe("tables", () => {
     const rookie = createEmptyCharacter();
     rookie.xp = -100;
     expect(characterLevel(rookie)).toBe(0);
+  });
+
+  it("maps milestone levels to the minimum XP for that level", () => {
+    expect(xpFromLevel(0)).toBe(-100);
+    expect(xpFromLevel(1)).toBe(0);
+    expect(xpFromLevel(2)).toBe(100);
+    expect(xpFromLevel(3)).toBe(225);
+    expect(levelFromXp(xpFromLevel(5))).toBe(5);
   });
 });
 
@@ -64,7 +73,65 @@ describe("characteristics and ability", () => {
 
   it("applies untrained secondary penalty without Jack of All Trades", () => {
     const character = freelancer();
-    expect(ability(character, "Notice")).toBeLessThan(0);
+    expect(ability(character, "Notice")).toBe(-30);
+  });
+
+  it("ignores stat bonuses on untrained secondaries", () => {
+    let character = freelancer();
+    character = addAdvantage(character, "Acute Senses", 1);
+    expect(ability(character, "Notice")).toBe(-30);
+  });
+
+  it("uses Jack of All Trades instead of the untrained penalty", () => {
+    let character = freelancer();
+    character = addAdvantage(character, "Jack of All Trades", 1);
+    expect(ability(character, "Notice")).toBe(10);
+  });
+
+  it("adds +40 for a chosen specialization", () => {
+    const character = freelancer();
+    character.levels[0].dp.Persuasion = 10;
+    const without = ability(character, "Persuasion");
+    character.specializations = { Persuasion: "seduction" };
+    expect(ability(character, "Persuasion")).toBe(without + 40);
+  });
+
+  it("matches specializations case-insensitively when rolling for a specialty", () => {
+    const character = freelancer();
+    character.levels[0].dp.Persuasion = 10;
+    character.specializations = { Persuasion: "seduction" };
+    expect(ability(character, "Persuasion", "Seduction")).toBe(ability(character, "Persuasion"));
+  });
+
+  it("applies characteristic bonuses once a secondary has dp spent", () => {
+    const character = freelancer();
+    character.levels[0].dp.Notice = 5;
+    expect(ability(character, "Notice")).toBe(0);
+  });
+});
+
+describe("class changes", () => {
+  it("charges 60 DP for an unrelated class change at level 2", () => {
+    const character = createEmptyCharacter();
+    character.levels[0].class = "Warrior";
+    character.levels.push({ class: "Wizard", dp: {} });
+    character.xp = 0;
+    const synced = syncLevels({ ...character, xp: xpFromLevel(2) });
+    expect(classChangeAtLevel(synced, 2)).toEqual({
+      previousClass: "Warrior",
+      className: "Wizard",
+      cost: 60,
+    });
+    expect(synced.levels[1].class).toBe("Wizard");
+  });
+
+  it("does not charge when continuing the same class", () => {
+    const character = syncLevels(createEmptyCharacter());
+    character.levels[0].class = "Warrior";
+    character.xp = xpFromLevel(2);
+    const synced = syncLevels(character);
+    synced.levels[1].class = "Warrior";
+    expect(classChangeAtLevel(synced, 2)).toBeNull();
   });
 });
 
@@ -99,6 +166,32 @@ describe("development points", () => {
     expect(dpCost(character, "Similar Weapon", "Weaponsmaster")).toBe(5);
     expect(dpCost(character, "Similar Weapon", "Freelancer")).toBe(10);
   });
+
+  it("caps spendable DP by total, category, and ability-specific limits", () => {
+    const character = createEmptyCharacter();
+    const remaining = dpRemainingForLevel(character, 1);
+    expect(maxDpForPurchase(remaining, "Attack")).toBeLessThanOrEqual(remaining.Total);
+    expect(maxDpForPurchase(remaining, "Attack")).toBeLessThanOrEqual(remaining.Combat);
+    expect(maxDpForPurchase(remaining, "Attack")).toBeLessThanOrEqual(remaining.Attack);
+    expect(maxDpForPurchase(remaining, "Wear Armor")).toBe(remaining.Combat);
+  });
+
+  it("computes max affordable DP spend in unit increments", () => {
+    expect(maxAffordableDpSpend(10, 2)).toBe(10);
+    expect(maxAffordableDpSpend(11, 2)).toBe(10);
+    expect(maxAffordableDpSpend(3, 2)).toBe(2);
+    expect(maxAffordableDpSpend(1, 2)).toBe(0);
+    expect(unitsFromDpSpend(10, 2)).toBe(5);
+  });
+
+  it("adds back DP from an excluded purchase when editing", () => {
+    const character = createEmptyCharacter();
+    character.levels[0].dp.Attack = 5;
+    const before = dpRemainingForLevel(character, 1).Total;
+    const excluding = dpRemainingForLevelExcluding(character, 1, "Attack").Total;
+    expect(excluding).toBeGreaterThan(before);
+    expect(dpSpentForPurchase(character, "Attack", 5, character.levels[0].class)).toBe(10);
+  });
 });
 
 describe("life points", () => {
@@ -112,6 +205,19 @@ describe("ki house rules", () => {
   it("makes Use of Ki free under OllyT rules", () => {
     expect(kiAbilityCost("Use of Ki", false)).toBe(40);
     expect(kiAbilityCost("Use of Ki", true)).toBe(0);
+  });
+
+  it("sums separated ki pools into a combined pool for display", () => {
+    const character = createEmptyCharacter();
+    const separated = combinedKiPool(character);
+    expect(separated.max).toBeGreaterThan(0);
+    expect(separated.perTurn).toBe(6);
+
+    character.settings.kiGenerationMode = "combined";
+    const withKi = addKiAbility(character, "Use of Ki", 1);
+    const sheet = deriveSheet(withKi);
+    expect(sheet.kiCombined).toEqual(separated);
+    expect(sheet.kiGenerationMode).toBe("combined");
   });
 });
 

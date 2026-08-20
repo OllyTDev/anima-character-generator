@@ -5,6 +5,7 @@ import { essentialAbilities } from "../data/essentialAbilities";
 import { martialArts } from "../data/martialArts";
 import { powers } from "../data/powers";
 import { primaries } from "../data/primaries";
+import type { PrimaryCategory } from "../data/types";
 import type { CharacterDocument } from "../schema/character";
 import { cloneCharacter } from "../schema/character";
 import { characterLevel, intersection, isSpirit, asNumber, asStringArray } from "./helpers";
@@ -19,19 +20,64 @@ export function bonusDpFromGnosis(gnosis: number | undefined): number {
   return 0;
 }
 
-export function classChangeDp(character: CharacterDocument, level: number): number {
-  if (level < 2) return 0;
-  const thisClass = character.levels[level - 1].class;
-  const lastClass = character.levels[level - 2].class;
-  if (thisClass === lastClass) return 0;
-  const thisTypes = classes[thisClass].Archetypes;
-  const lastTypes = classes[lastClass].Archetypes;
+export function classChangeCostBetween(
+  character: CharacterDocument,
+  fromClass: string,
+  toClass: string,
+): number {
+  if (fromClass === toClass) return 0;
+  const thisTypes = classes[toClass].Archetypes;
+  const lastTypes = classes[fromClass].Archetypes;
   let cost = 60;
-  if (thisClass === "Freelancer" || lastClass === "Freelancer") cost = 20;
+  if (toClass === "Freelancer" || fromClass === "Freelancer") cost = 20;
   else if (thisTypes.length === 1 && lastTypes.length === 1 && thisTypes[0] === lastTypes[0]) cost = 20;
   else if (intersection([...thisTypes], [...lastTypes]).length > 0) cost = 40;
   if ("Versatile" in character.advantages) cost /= 2;
   return cost;
+}
+
+export function classChangeDp(character: CharacterDocument, level: number): number {
+  if (level < 2) return 0;
+  const thisClass = character.levels[level - 1].class;
+  const lastClass = character.levels[level - 2].class;
+  return classChangeCostBetween(character, lastClass, thisClass);
+}
+
+export type ClassChangePurchase = {
+  previousClass: string;
+  className: string;
+  cost: number;
+};
+
+export function classChangeAtLevel(character: CharacterDocument, level: number): ClassChangePurchase | null {
+  if (level < 2) return null;
+  const previousClass = character.levels[level - 2]?.class;
+  const className = character.levels[level - 1]?.class;
+  if (!previousClass || !className || previousClass === className) return null;
+  return {
+    previousClass,
+    className,
+    cost: classChangeDp(character, level),
+  };
+}
+
+export function formatClassChangeLabel(change: ClassChangePurchase): string {
+  return `Class change (${change.previousClass} → ${change.className}): ${change.cost} DP`;
+}
+
+export function classChangeAffordable(
+  character: CharacterDocument,
+  level: number,
+  targetClass: string,
+  remainingOther: number,
+): boolean {
+  if (level < 2) return true;
+  const previousClass = character.levels[level - 2]?.class;
+  if (!previousClass) return true;
+  const current = classChangeAtLevel(character, level);
+  const nextCost = classChangeCostBetween(character, previousClass, targetClass);
+  const currentCost = current?.cost ?? 0;
+  return nextCost - currentCost <= remainingOther;
 }
 
 export function dpCost(character: CharacterDocument, abilityName: string, className: string, degree?: string): number {
@@ -99,8 +145,72 @@ function spentForItem(character: CharacterDocument, item: string, value: unknown
 
 export type DpRemaining = Record<string, number>;
 
+const DP_CATEGORY_KEYS = new Set<PrimaryCategory | "Total">([
+  "Combat",
+  "Psychic",
+  "Supernatural",
+  "Other",
+  "Powers",
+  "Total",
+]);
+
 function num(row: Record<string, number>, key: string): number {
   return row[key] ?? 0;
+}
+
+export function dpRemainingForLevel(character: CharacterDocument, level: number): DpRemaining {
+  const index = level === 0 ? 0 : level - 1;
+  return dpRemaining(character)[index] ?? {};
+}
+
+/** Remaining DP at a level as if an existing purchase were removed (for editing). */
+export function dpRemainingForLevelExcluding(
+  character: CharacterDocument,
+  level: number,
+  purchaseName: string,
+): DpRemaining {
+  const index = level === 0 ? 0 : level - 1;
+  if (!(purchaseName in (character.levels[index]?.dp ?? {}))) {
+    return dpRemainingForLevel(character, level);
+  }
+  const next = cloneCharacter(character);
+  delete next.levels[index].dp[purchaseName];
+  return dpRemainingForLevel(next, level);
+}
+
+export function dpSpentForPurchase(
+  character: CharacterDocument,
+  name: string,
+  value: unknown,
+  className: string,
+): number {
+  return spentForItem(character, name, value, className);
+}
+
+export function maxDpForPurchase(remaining: DpRemaining, abilityName: string): number {
+  const primary = primaries.forAbility(abilityName);
+  let max = Math.min(num(remaining, "Total"), num(remaining, primary));
+  if (
+    abilityName in remaining &&
+    !DP_CATEGORY_KEYS.has(abilityName as PrimaryCategory | "Total") &&
+    !abilityName.startsWith("Save ") &&
+    abilityName !== "Class_Change"
+  ) {
+    max = Math.min(max, num(remaining, abilityName));
+  }
+  return Math.max(0, Math.floor(max));
+}
+
+/** Largest affordable DP spend, rounded down to a whole number of units. */
+export function maxAffordableDpSpend(maxDp: number, unitCost: number): number {
+  if (unitCost <= 0) return 0;
+  return Math.floor(maxDp / unitCost) * unitCost;
+}
+
+/** Convert a DP spend amount to the stored purchase value (units). */
+export function unitsFromDpSpend(dpAmount: number, unitCost: number): number {
+  if (unitCost <= 0) return 0;
+  return dpAmount / unitCost;
 }
 
 export function dpRemaining(character: CharacterDocument): DpRemaining[] {

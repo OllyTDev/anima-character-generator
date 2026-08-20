@@ -1,9 +1,10 @@
-import { abilities } from "../data/abilities";
+import { abilities, resolveSpecializationChoice } from "../data/abilities";
 import { classes } from "../data/classes";
 import { culturalRoots } from "../data/culturalRoots";
 import { tables } from "../data/tables";
 import type { Characteristic } from "../data/types";
 import type { CharacterDocument } from "../schema/character";
+import { cloneCharacter } from "../schema/character";
 import { modifier } from "./characteristics";
 import { asNumber, characterLevel, levelCount } from "./helpers";
 
@@ -18,6 +19,38 @@ const culturalAliases: Record<string, string> = {
 
 function canonicalAbility(name: string): string {
   return culturalAliases[name] ?? name;
+}
+
+export function setSpecialization(
+  character: CharacterDocument,
+  abilityName: string,
+  specialization: string,
+): CharacterDocument {
+  const next = cloneCharacter(character);
+  const trimmed = specialization.trim();
+  if (!trimmed) {
+    if (next.specializations) {
+      const { [abilityName]: _removed, ...rest } = next.specializations;
+      next.specializations = Object.keys(rest).length > 0 ? rest : undefined;
+    }
+  } else {
+    next.specializations = {
+      ...next.specializations,
+      [abilityName]: resolveSpecializationChoice(abilityName, trimmed),
+    };
+  }
+  return next;
+}
+
+function specializationBonusApplies(
+  character: CharacterDocument,
+  abilityName: string,
+  specialty?: string,
+): boolean {
+  const stored = character.specializations?.[abilityName];
+  if (!stored) return false;
+  if (!specialty) return true;
+  return specialty.toLowerCase() === stored.toLowerCase();
 }
 
 function culturalBonus(
@@ -57,9 +90,33 @@ function culturalBonus(
   return 0;
 }
 
+export function secondaryDpSpent(character: CharacterDocument, name: string, atLevel?: number): number {
+  const count = levelCount(atLevel, character);
+  let total = 0;
+  for (let i = 0; i < count; i++) {
+    total += asNumber(character.levels[i].dp[name]);
+  }
+  return total;
+}
+
+export function secondaryHasInvestment(character: CharacterDocument, name: string, atLevel?: number): boolean {
+  if (secondaryDpSpent(character, name, atLevel) > 0) return true;
+  const count = levelCount(atLevel, character);
+  for (let i = 0; i < count; i++) {
+    if (character.levels[i].freelancer?.includes(name)) return true;
+  }
+  return false;
+}
+
 export function ability(character: CharacterDocument, name: string, specialty?: string, atLevel?: number): number {
   const def = abilities[name];
   if (!def) return 0;
+
+  if (def.Field && !secondaryHasInvestment(character, name, atLevel)) {
+    if ("Jack of All Trades" in character.advantages) return 10;
+    return -30;
+  }
+
   const count = levelCount(atLevel, character);
   const totLevel = characterLevel(character);
   const charName = def.Characteristic as Characteristic;
@@ -129,7 +186,7 @@ export function ability(character: CharacterDocument, name: string, specialty?: 
   }
   if ("Talented" in character.advantages && name === "Sleight of Hand") bonuses += 30;
   if (character.race === "Devah Nephilim" && (name === "Banish" || name === "Bind")) bonuses += 10;
-  if (specialty && character.specializations?.[name] === specialty) bonuses += 40;
+  if (specializationBonusApplies(character, name, specialty)) bonuses += 40;
 
   return total + bonuses + modifier(character, charName, atLevel);
 }

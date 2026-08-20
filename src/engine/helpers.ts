@@ -11,6 +11,15 @@ export function levelFromXp(xp: number): number {
   return 16;
 }
 
+export function xpFromLevel(level: number): number {
+  const chart = tables.xp_chart;
+  if (level <= 0) return -100;
+  if (level >= 16) return chart[15] ?? 4125;
+  return chart[level - 1] ?? 0;
+}
+
+export const MAX_CHARACTER_LEVEL = 16;
+
 export function characterLevel(character: CharacterDocument): number {
   return levelFromXp(character.xp);
 }

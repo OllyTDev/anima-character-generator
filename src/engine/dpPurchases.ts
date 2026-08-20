@@ -1,6 +1,36 @@
 import { combatModules } from "../data/combatModules";
 import { essentialAbilities } from "../data/essentialAbilities";
 import { martialArts } from "../data/martialArts";
+import { primaries } from "../data/primaries";
+
+export const dpDisplayCategories = ["Combat", "Supernatural", "Psychic", "Other", "MK"] as const;
+export type DpDisplayCategory = (typeof dpDisplayCategories)[number];
+
+export function dpDisplayCategoryLabel(category: DpDisplayCategory): string {
+  return category === "MK" ? "Martial Knowledge" : category;
+}
+
+export function dpPurchaseCategory(name: string): DpDisplayCategory {
+  const category = primaries.forAbility(name);
+  return category === "Powers" ? "Other" : category;
+}
+
+export function groupDpPurchaseNames(names: string[]): Record<DpDisplayCategory, string[]> {
+  const grouped: Record<DpDisplayCategory, string[]> = {
+    Combat: [],
+    MK: [],
+    Supernatural: [],
+    Psychic: [],
+    Other: [],
+  };
+  for (const name of names) {
+    grouped[dpPurchaseCategory(name)].push(name);
+  }
+  for (const category of dpDisplayCategories) {
+    grouped[category].sort((a, b) => a.localeCompare(b));
+  }
+  return grouped;
+}
 
 export function isEditableDpPurchase(name: string, value: unknown): value is number {
   if (typeof value !== "number") return false;
