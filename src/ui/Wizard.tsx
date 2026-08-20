@@ -364,8 +364,11 @@ function BasicsStep() {
               value={character.gender}
               onChange={(event) => patch((current) => ({ ...current, gender: event.target.value }))}
             >
+              <option value="">—</option>
               {genders.map((gender) => (
-                <option key={gender}>{gender}</option>
+                <option key={gender} value={gender}>
+                  {gender}
+                </option>
               ))}
             </select>
           </label>

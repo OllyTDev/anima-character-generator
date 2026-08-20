@@ -84,7 +84,7 @@ export function createEmptyCharacter(): CharacterDocument {
     settings: { ollyTRules: false, generationMethod: "open", levelMode: "xp", kiGenerationMode: "separated" },
     name: "",
     race: "Human",
-    gender: "Male",
+    gender: "",
     type: "Human",
     gnosis: 0,
     xp: 0,
