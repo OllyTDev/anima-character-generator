@@ -81,7 +81,7 @@ export function Wizard() {
       {step === "abilities" && <DevelopmentStep />}
       {step === "sheet" && <FullCharacterSheet />}
       {step !== "sheet" && (
-      <>
+      <section className="wizard-persist">
       <h2>Save / Load</h2>
       <p className="muted">Versioned JSON (schemaVersion 1). Autosaved in this browser; export to keep a copy.</p>
       <textarea
@@ -112,7 +112,7 @@ export function Wizard() {
           OllyT rules: {character.settings.ollyTRules ? "on" : "off"}
         </button>
       </div>
-      </>
+      </section>
       )}
       {newCharacterOpen ? (
         <DialogBackdrop onDismiss={() => setNewCharacterOpen(false)}>
@@ -240,11 +240,7 @@ function TypeStep() {
         </label>
         <p className="muted">{KI_GENERATION_MODE_EXPLANATION}</p>
       </div>
-      <div className="actions">
-        <button type="button" onClick={() => setStep(character.type === "Human" ? "basics" : "creature")}>
-          Continue
-        </button>
-      </div>
+      <WizardContinueButton onClick={() => setStep(character.type === "Human" ? "basics" : "creature")} />
     </section>
   );
 }
@@ -299,11 +295,7 @@ function CreatureStep() {
           />
         </label>
       </div>
-      <div className="actions">
-        <button type="button" onClick={() => setStep("essentials")}>
-          Continue
-        </button>
-      </div>
+      <WizardContinueButton onClick={() => setStep("essentials")} />
     </section>
   );
 }
@@ -350,11 +342,7 @@ function EssentialStep() {
             </div>
           ))}
       </div>
-      <div className="actions">
-        <button type="button" onClick={() => setStep("basics")}>
-          Continue
-        </button>
-      </div>
+      <WizardContinueButton onClick={() => setStep("basics")} />
     </section>
   );
 }
@@ -488,11 +476,7 @@ function BasicsStep() {
           </label>
         )}
       </div>
-      <div className="actions">
-        <button type="button" disabled={overLimit} onClick={() => setStep(character.type === "Human" ? "points" : "abilities")}>
-          Continue
-        </button>
-      </div>
+      <WizardContinueButton disabled={overLimit} onClick={() => setStep(character.type === "Human" ? "points" : "abilities")} />
     </section>
   );
 }
@@ -548,11 +532,7 @@ function PointsStep() {
         onClose={() => setDisadvantageOpen(false)}
         onApply={(next) => patch(() => next)}
       />
-      <div className="actions">
-        <button type="button" onClick={() => setStep("abilities")}>
-          Continue
-        </button>
-      </div>
+      <WizardContinueButton onClick={() => setStep("abilities")} />
     </section>
   );
 }
@@ -564,6 +544,16 @@ function CpSummary() {
       CP remaining {data.cp.remaining} (common {data.cp.common}, background {data.cp.background}, magic {data.cp.magic},
       psychic {data.cp.psychic})
     </p>
+  );
+}
+
+function WizardContinueButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
+  return (
+    <div className="wizard-continue-actions">
+      <button type="button" className="wizard-continue" disabled={disabled} onClick={onClick}>
+        Continue <span aria-hidden="true">→</span>
+      </button>
+    </div>
   );
 }
 
