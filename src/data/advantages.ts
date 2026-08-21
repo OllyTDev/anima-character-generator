@@ -276,14 +276,10 @@ export const advantages: Record<string, AdvantageDef> = {
   "Unspoken Casting": {
     effect: "A character with this Advantage does not need to speak to control the powers of the Soul Flow of souls. Effects: The character can cast spells in complete silence without reducing their MA.", Category: "Magic", Cost: 1 },
   Untiring: {
-
     effect: "A character with this Advantage possesses a superior endurance relative to what their Constitution would indicate. Effects: A player can add 3 points to their character’s Fatigue. Spending additional Creation Points adds 6 and 9 points, respectively. Thus, a character whose player spends 2 Creation Points on this Advantage would add 6 to their Fatigue score.", Cost: [1, 2, 3] },
-  "Usage Affinity": {
-    effect: "Effect not yet documented.", Cost: 1 },
   "Use of Armor": {
     effect: "The character has a natural competence for learning how to wear and use armor, regardless of their class. Effect: Each time the character gains a level, they receive a +5 innate bonus to the Primary Combat Ability Wear Armor, which is added to any other bonus the character may receive from their class. If the character spends two or three Creation Points, this bonus increases to +10 or +15, respectively", Cost: [1, 2, 3] },
   Versatile: {
-
     effect: "The character can easily adapt to change and knows how to focus their life in a different way. Therefore, they have an easier time changing classes. Effect: When the character wants to change to a new class, the cost in Development Points is halved, and they do not have to wait two levels to realize the change. In other words, a character with this advantage only needs to spend 10 Development Points to change to a different class within the same Archetype, or 20 Development Points if one or both classes are mixed and they share at least common Archetype, or 30 Development Points to change to a new class in a different Archetype than the original class", Cost: 1 },
   "Versatile Metamagic": {
     effect: "The character has a knack for developing many different Metamagic advantages. Effects: The character can choose two different starting points on the Arcana Shepirah. Requirement: Requires the Gift.", Category: "Magic", Cost: 1 },
