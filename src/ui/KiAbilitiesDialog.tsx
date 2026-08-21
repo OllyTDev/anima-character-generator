@@ -5,6 +5,7 @@ import type { CharacterDocument } from "../schema/character";
 import { useEffect, useMemo, useState } from "react";
 import { DialogBackdrop } from "./DialogBackdrop";
 import { KiAbilityTree } from "./KiAbilityTree";
+import { useMediaQuery } from "./useMediaQuery";
 
 type KiAbilitiesDialogProps = {
   character: CharacterDocument;
@@ -29,6 +30,7 @@ function findKiAbilityOption(options: KiAbilityOption[], name: string): KiAbilit
 }
 
 export function KiAbilitiesDialog({ character, level, mkRemaining, open, onClose, onLearn }: KiAbilitiesDialogProps) {
+  const isMobile = useMediaQuery("(max-width: 600px)");
   const [tab, setTab] = useState<KiDialogTab>("tree");
   const [expandedTree, setExpandedTree] = useState<ExpandedTree>(null);
   const [selected, setSelected] = useState<KiAbilityOption | null>(null);
@@ -42,14 +44,14 @@ export function KiAbilitiesDialog({ character, level, mkRemaining, open, onClose
 
   useEffect(() => {
     if (open) {
-      setTab("tree");
+      setTab(isMobile ? "list" : "tree");
       setExpandedTree(null);
       setSelected(null);
       setOption("");
       setSearch("");
       setOverspendWarning(null);
     }
-  }, [open]);
+  }, [open, isMobile]);
 
   if (!open) return null;
 

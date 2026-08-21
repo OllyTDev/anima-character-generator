@@ -13,7 +13,7 @@ type KiAbilityTreeNodeProps = {
   y: number;
   width: number;
   height: number;
-  onSelect: (name: string) => void;
+  onSelect: (name: string, event?: MouseEvent<HTMLButtonElement>) => void;
   onHover: (name: string | null, event?: MouseEvent | FocusEvent) => void;
 };
 
@@ -49,7 +49,7 @@ export function KiAbilityTreeNode({
       style={{ left: x, top: y, width, height }}
       aria-label={`${name}, ${cost} MK, ${status}`}
       aria-pressed={selected}
-      onClick={() => onSelect(name)}
+      onClick={(event) => onSelect(name, event)}
       onMouseEnter={(event) => onHover(name, event)}
       onMouseLeave={() => onHover(null)}
       onFocus={(event) => onHover(name, event)}
