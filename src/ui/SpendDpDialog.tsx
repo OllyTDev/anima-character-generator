@@ -206,8 +206,8 @@ export function SpendDpDialog({
                             role="button"
                             aria-pressed={isSelected}
                           >
-                            <td>{item.name}</td>
-                            <td>
+                            <td data-label="Name">{item.name}</td>
+                            <td data-label="Cost">
                               {item.cost} {item.unit}
                               {!affordable ? <span className="muted"> — insufficient DP</span> : null}
                             </td>

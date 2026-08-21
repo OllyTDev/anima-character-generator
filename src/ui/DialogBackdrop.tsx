@@ -1,4 +1,4 @@
-import { useRef, type PointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, type PointerEvent, type ReactNode } from "react";
 
 type DialogBackdropProps = {
   onDismiss: () => void;
@@ -9,6 +9,14 @@ type DialogBackdropProps = {
 /** Dismisses only when the pointer is pressed and released on the backdrop itself. */
 export function DialogBackdrop({ onDismiss, className = "dialog-backdrop", children }: DialogBackdropProps) {
   const dismissOnRelease = useRef(false);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     dismissOnRelease.current = event.target === event.currentTarget;

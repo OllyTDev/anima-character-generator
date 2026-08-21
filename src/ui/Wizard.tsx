@@ -32,6 +32,7 @@ import { KiAbilitiesDialog } from "./KiAbilitiesDialog";
 import { NaturalBonusDialog, naturalBonusAmount } from "./NaturalBonusDialog";
 import { NumberInput } from "./NumberInput";
 import { SpendDpDialog } from "./SpendDpDialog";
+import { useMediaQuery } from "./useMediaQuery";
 
 const steps: { id: WizardStep; label: string }[] = [
   { id: "type", label: "Generation Options" },
@@ -43,10 +44,21 @@ const steps: { id: WizardStep; label: string }[] = [
   { id: "sheet", label: "Full Character Sheet" },
 ];
 
+const stepShortLabels: Record<WizardStep, string> = {
+  type: "Options",
+  creature: "Creature",
+  essentials: "Essentials",
+  basics: "Stats",
+  points: "CP",
+  abilities: "Dev",
+  sheet: "Sheet",
+};
+
 export function Wizard() {
   const { character, step, setStep, reset, exportJson, importJson, download, loadError, migrationNotice, dismissMigrationNotice } =
     useCharacterStore();
   const [newCharacterOpen, setNewCharacterOpen] = useState(false);
+  const isCompactSteps = useMediaQuery("(max-width: 600px)");
   const human = character.type === "Human";
   const visibleSteps = steps.filter((item) => {
     if (item.id === "sheet") return true;
@@ -59,7 +71,7 @@ export function Wizard() {
       <nav className="steps">
         {visibleSteps.map((item) => (
           <button key={item.id} className={step === item.id ? "active" : ""} onClick={() => setStep(item.id)} type="button">
-            {item.label}
+            {isCompactSteps ? stepShortLabels[item.id] : item.label}
           </button>
         ))}
       </nav>
@@ -567,7 +579,7 @@ function PointsStep() {
 function CpSummary() {
   const data = useSheet();
   return (
-    <p>
+    <p className="cp-summary">
       CP remaining {data.cp.remaining} (common {data.cp.common}, background {data.cp.background}, magic {data.cp.magic},
       psychic {data.cp.psychic})
     </p>
@@ -592,6 +604,7 @@ function levelBlockShouldSelect(event: { target: EventTarget | null }): boolean 
 
 function DevelopmentStep() {
   const { character, patch } = useCharacterStore();
+  const isMobile = useMediaQuery("(max-width: 600px)");
   const charLevel = characterLevel(character);
   const defaultLevel = charLevel === 0 ? 0 : 1;
   const [selectedLevel, setSelectedLevel] = useState(defaultLevel);
@@ -696,13 +709,16 @@ function DevelopmentStep() {
 
             {isEditing ? (
               <div className="level-editor-panel">
-                <p className="level-editor-summary">
-                  Editing level {selectedLevel} ({info.class}). DP left: total{" "}
-                  {Math.floor(blockRemaining?.Total ?? 0)}, combat {Math.floor(blockRemaining?.Combat ?? 0)},
-                  supernatural {Math.floor(blockRemaining?.Supernatural ?? 0)}, psychic{" "}
-                  {Math.floor(blockRemaining?.Psychic ?? 0)}, other {Math.floor(blockRemaining?.Other ?? 0)}. MK
-                  remaining {Math.floor(blockMkLeft)}.
-                </p>
+                <details className="level-editor-summary-details" open={!isMobile}>
+                  <summary>Level summary</summary>
+                  <p className="level-editor-summary">
+                    Editing level {selectedLevel} ({info.class}). DP left: total{" "}
+                    {Math.floor(blockRemaining?.Total ?? 0)}, combat {Math.floor(blockRemaining?.Combat ?? 0)},
+                    supernatural {Math.floor(blockRemaining?.Supernatural ?? 0)}, psychic{" "}
+                    {Math.floor(blockRemaining?.Psychic ?? 0)}, other {Math.floor(blockRemaining?.Other ?? 0)}. MK
+                    remaining {Math.floor(blockMkLeft)}.
+                  </p>
+                </details>
                 <div className="development-actions">
                   <button
                     type="button"

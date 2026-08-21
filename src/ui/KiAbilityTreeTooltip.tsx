@@ -1,6 +1,7 @@
 import { kiAbilities, kiAbilityCost } from "../data/kiAbilities";
 import type { KiAbilityNodeStatus } from "../engine/kiAbilityGraph";
 import { kiAbilityEffectText } from "../engine/kiAbilityGraph";
+import { useMemo } from "react";
 
 type KiAbilityTreeTooltipProps = {
   name: string;
@@ -11,6 +12,7 @@ type KiAbilityTreeTooltipProps = {
   visible: boolean;
   x: number;
   y: number;
+  mobile?: boolean;
 };
 
 export function KiAbilityTreeTooltip({
@@ -22,6 +24,7 @@ export function KiAbilityTreeTooltip({
   visible,
   x,
   y,
+  mobile = false,
 }: KiAbilityTreeTooltipProps) {
   if (!visible) return null;
 
@@ -30,10 +33,19 @@ export function KiAbilityTreeTooltip({
   const ollyCost = def.OTMK;
   const showOllyNote = ollyTRules && baseCost !== ollyCost;
 
+  const style = useMemo(() => {
+    if (mobile) return undefined;
+    const pad = 12;
+    const maxWidth = 288;
+    const left = Math.min(Math.max(pad, x + pad), window.innerWidth - maxWidth - pad);
+    const top = Math.min(Math.max(pad, y + pad), window.innerHeight - pad);
+    return { left, top };
+  }, [mobile, x, y]);
+
   return (
     <div
-      className="ki-tree-tooltip"
-      style={{ left: x + 12, top: y + 12 }}
+      className={`ki-tree-tooltip${mobile ? " ki-tree-tooltip--sheet" : ""}`}
+      style={style}
       role="tooltip"
     >
       <strong>{name}</strong>
