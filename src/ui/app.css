@@ -1200,6 +1200,19 @@ textarea { min-height: 10rem; width: 100%; }
   overflow: auto;
 }
 
+.creation-point-effect-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.creation-point-description {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
 .creation-point-effect {
   line-height: 1.45;
   white-space: pre-wrap;

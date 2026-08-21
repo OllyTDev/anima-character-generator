@@ -1,6 +1,6 @@
 import { createEmptyCharacter } from "../schema/character";
 import { addAdvantage } from "./creationPoints";
-import { buildAdvantageOptions, buildDisadvantageOptions, advantageEffectText, groupCreationPointsByCategory } from "./creationPointOptions";
+import { buildAdvantageOptions, buildDisadvantageOptions, advantageEffectText, groupCreationPointsByCategory, parseCreationPointEffect } from "./creationPointOptions";
 import { describe, expect, it } from "vitest";
 
 describe("creationPointOptions", () => {
@@ -20,8 +20,21 @@ describe("creationPointOptions", () => {
     expect(quickReflexes?.allowed).toBe(false);
   });
 
-  it("includes effect text for advantages with legacy descriptions", () => {
-    expect(advantageEffectText("Quick Reflexes")).toContain("initiative");
+  it("includes effect text for advantages with descriptions", () => {
+    expect(advantageEffectText("Quick Reflexes")).toContain("Initiative");
+  });
+
+  it("splits advantage flavor text from Effects rules", () => {
+    expect(parseCreationPointEffect(advantageEffectText("Acute Senses"))).toEqual({
+      description: "The character’s senses are as developed as those of an animal.",
+      mechanics: "Effects: This Advantage adds 1 point to the character’s Perception when making Characteristic Checks. It also adds a special bonus of +30 to Notice and Search",
+    });
+  });
+
+  it("keeps undivided text when no Effect label is present", () => {
+    expect(parseCreationPointEffect("Effect not yet documented.")).toEqual({
+      description: "Effect not yet documented.",
+    });
   });
 
   it("groups disadvantages by category tab", () => {

@@ -26,6 +26,24 @@ export function disadvantageEffectText(name: string): string {
   return disadvantages[name].effect ?? CREATION_POINT_EFFECT_PLACEHOLDER;
 }
 
+export type ParsedCreationPointEffect = {
+  description: string;
+  mechanics?: string;
+};
+
+/** Split flavor text from rules when an entry uses "Effect:" or "Effects:". */
+export function parseCreationPointEffect(text: string): ParsedCreationPointEffect {
+  const match = text.match(/\sEffects?:\s/);
+  if (!match || match.index === undefined) {
+    return { description: text };
+  }
+
+  const description = text.slice(0, match.index).trim();
+  const mechanics = text.slice(match.index).trim();
+  if (!description) return { description: mechanics };
+  return { description, mechanics };
+}
+
 function tabForCategory(category?: string): CreationPointTabId {
   if (category === "Magic" || category === "Psychic" || category === "Background") return category;
   return "Common";

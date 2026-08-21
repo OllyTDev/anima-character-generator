@@ -16,6 +16,7 @@ import {
 } from "../engine/creationPointOptions";
 import type { CharacterDocument } from "../schema/character";
 import { useEffect, useMemo, useState } from "react";
+import { CreationPointEffectText } from "./CreationPointEffectText";
 import { DialogBackdrop } from "./DialogBackdrop";
 
 type CreationPointDialogProps = {
@@ -156,7 +157,7 @@ export function CreationPointDialog({ character, kind, open, onClose, onApply }:
             <p className="muted spend-dp-hint">Select an option above to continue.</p>
           ) : (
             <div className="spend-dp-confirm creation-point-confirm">
-              <p className="creation-point-effect">{selected.effect}</p>
+              <CreationPointEffectText text={selected.effect} />
               {!selectedAllowed ? (
                 <p className="ki-tree-footer-warning">This option is not currently available for this character.</p>
               ) : null}
