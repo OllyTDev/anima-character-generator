@@ -7,13 +7,18 @@ import {
   type SpendTabId,
 } from "../engine/spendOptions";
 import { combatModules } from "../data/combatModules";
+import { kiCharacteristics } from "../data/lists";
 import {
+  addKiStatDpSpend,
+  asKiStatRecord,
   dpCost,
   dpRemainingForLevel,
   dpRemainingForLevelExcluding,
   dpSpentForPurchase,
+  isKiStatDpPurchase,
   maxAffordableDpSpend,
   maxDpForPurchase,
+  setKiStatDpUnits,
   spendDp,
   unitsFromDpSpend,
 } from "../engine/developmentPoints";
@@ -59,6 +64,7 @@ export function SpendDpDialog({
   const [activeTab, setActiveTab] = useState<SpendTabId>("Combat");
   const [selected, setSelected] = useState<SpendOption | null>(null);
   const [dpToSpend, setDpToSpend] = useState<number | null>(null);
+  const [kiStat, setKiStat] = useState<string>(kiCharacteristics[0]);
   const tabs = useMemo(() => buildSpendTabs(character, className), [character, className]);
   const editingName = editPurchase?.name ?? null;
   const usesEditBudget = editingName !== null && selected?.name === editingName;
@@ -77,7 +83,15 @@ export function SpendDpDialog({
         setActiveTab(found.tab);
         setSelected(found.option);
         if (found.option.kind === "dp") {
-          setDpToSpend(dpSpentForPurchase(character, editPurchase.name, editPurchase.value, className));
+          if (isKiStatDpPurchase(editPurchase.name)) {
+            const record = asKiStatRecord(editPurchase.value);
+            const stats = Object.keys(record);
+            const stat = stats[0] ?? kiCharacteristics[0];
+            setKiStat(stat);
+            setDpToSpend((record[stat] ?? 0) * found.option.cost);
+          } else {
+            setDpToSpend(dpSpentForPurchase(character, editPurchase.name, editPurchase.value, className));
+          }
         } else {
           setDpToSpend(null);
         }
@@ -87,7 +101,14 @@ export function SpendDpDialog({
     setActiveTab("Combat");
     setSelected(null);
     setDpToSpend(null);
+    setKiStat(kiCharacteristics[0]);
   }, [open, editPurchase, tabs, character, className]);
+
+  useEffect(() => {
+    if (!selected || !isKiStatDpPurchase(selected.name) || !editPurchase) return;
+    const record = asKiStatRecord(editPurchase.value);
+    setDpToSpend((record[kiStat] ?? 0) * selected.cost);
+  }, [kiStat, selected, editPurchase]);
 
   if (!open) return null;
 
@@ -100,7 +121,8 @@ export function SpendDpDialog({
   const canAffordSelected =
     selected !== null &&
     (selected.kind === "dp"
-      ? isValidDpSpend(dpToSpend, selected.cost, selectedMaxDp)
+      ? isValidDpSpend(dpToSpend, selected.cost, selectedMaxDp) &&
+        (!isKiStatDpPurchase(selected.name) || kiCharacteristics.includes(kiStat as (typeof kiCharacteristics)[number]))
       : selected.cost <= selectedMaxDp);
 
   const applySpend = (next: CharacterDocument) => {
@@ -112,6 +134,15 @@ export function SpendDpDialog({
     if (!selected || !canAffordSelected) return;
     if (selected.kind === "dp") {
       const units = unitsFromDpSpend(dpToSpend!, selected.cost);
+      if (isKiStatDpPurchase(selected.name)) {
+        const purchaseName = selected.name;
+        if (isEditing) {
+          applySpend(setKiStatDpUnits(character, level || 1, purchaseName, kiStat, units));
+        } else {
+          applySpend(addKiStatDpSpend(character, level || 1, purchaseName, kiStat, units));
+        }
+        return;
+      }
       applySpend(spendDp(character, level || 1, selected.name, units));
       return;
     }
@@ -130,7 +161,10 @@ export function SpendDpDialog({
 
   const selectOption = (item: SpendOption) => {
     setSelected(item);
-    if (item.kind === "dp") setDpToSpend(item.cost);
+    if (item.kind === "dp") {
+      setDpToSpend(item.cost);
+      if (isKiStatDpPurchase(item.name)) setKiStat(kiCharacteristics[0]);
+    }
   };
 
   return (
@@ -232,6 +266,18 @@ export function SpendDpDialog({
               <p className="muted">
                 Up to {selectedMaxAffordable} DP available for {selected.name} ({selected.cost} DP per point).
               </p>
+              {isKiStatDpPurchase(selected.name) ? (
+                <label>
+                  {selected.name === "Ki" ? "Ki characteristic" : "Characteristic to boost"}
+                  <select value={kiStat} onChange={(event) => setKiStat(event.target.value)}>
+                    {kiCharacteristics.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
               <label>
                 DP to spend
                 <NumberInput
@@ -253,6 +299,7 @@ export function SpendDpDialog({
               ) : null}
               <button type="button" disabled={!canAffordSelected} onClick={confirmSimpleSpend}>
                 {isEditing ? "Update" : "Spend"} {dpToSpend ?? 0} DP on {selected.name}
+                {isKiStatDpPurchase(selected.name) ? ` (${kiStat})` : ""}
               </button>
             </div>
           ) : selected.kind === "module" ? (

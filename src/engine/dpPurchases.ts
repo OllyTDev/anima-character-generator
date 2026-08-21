@@ -2,6 +2,7 @@ import { combatModules } from "../data/combatModules";
 import { essentialAbilities } from "../data/essentialAbilities";
 import { martialArts } from "../data/martialArts";
 import { primaries } from "../data/primaries";
+import { asKiStatRecord, isKiStatDpPurchase } from "./developmentPoints";
 
 export const dpDisplayCategories = ["Combat", "Supernatural", "Psychic", "Other", "MK"] as const;
 export type DpDisplayCategory = (typeof dpDisplayCategories)[number];
@@ -33,6 +34,7 @@ export function groupDpPurchaseNames(names: string[]): Record<DpDisplayCategory,
 }
 
 export function isEditableDpPurchase(name: string, value: unknown): value is number {
+  if (isKiStatDpPurchase(name)) return Object.keys(asKiStatRecord(value)).length > 0;
   if (typeof value !== "number") return false;
   if (name in combatModules) return false;
   if (name in martialArts) return false;
@@ -59,6 +61,14 @@ export function optionTextFromValue(value: unknown): string {
 }
 
 export function formatDpPurchaseLabel(name: string, value: unknown): string {
+  if (isKiStatDpPurchase(name)) {
+    const record = asKiStatRecord(value);
+    const parts = Object.entries(record)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([stat, units]) => `${stat} +${units}`)
+      .join(", ");
+    return parts ? `${name}: ${parts}` : name;
+  }
   if (hasEditableOption(name)) {
     const text = optionTextFromValue(value);
     return text ? `${name}: ${text}` : name;

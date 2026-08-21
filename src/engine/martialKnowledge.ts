@@ -6,6 +6,7 @@ import type { CharacterDocument } from "../schema/character";
 import { cloneCharacter } from "../schema/character";
 import { ability } from "./ability";
 import { characteristic } from "./characteristics";
+import { asKiStatRecord } from "./developmentPoints";
 import { characterLevel, levelCount } from "./helpers";
 
 export function hasKiAbility(character: CharacterDocument, name: string, option?: string, level?: number): boolean {
@@ -88,8 +89,8 @@ export function kiPoints(character: CharacterDocument, name: "STR" | "DEX" | "AG
   let total = characteristic(character, name);
   if (total > 10) total += total - 10;
   for (const level of character.levels) {
-    const points = level.dp.Ki as Record<string, number> | undefined;
-    if (points?.[name]) total += points[name];
+    const points = asKiStatRecord(level.dp.Ki);
+    if (points[name]) total += points[name];
   }
   return total;
 }
@@ -101,8 +102,8 @@ export function kiAccumulation(character: CharacterDocument, name: "STR" | "DEX"
   else if (score >= 13) total = 3;
   else if (score >= 10) total = 2;
   for (const level of character.levels) {
-    const multiples = level.dp["Accumulation Multiple"] as Record<string, number> | undefined;
-    if (multiples?.[name]) total += multiples[name];
+    const multiples = asKiStatRecord(level.dp["Accumulation Multiple"]);
+    if (multiples[name]) total += multiples[name];
   }
   return total;
 }

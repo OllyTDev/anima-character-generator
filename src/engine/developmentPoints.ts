@@ -134,13 +134,65 @@ function spentForItem(character: CharacterDocument, item: string, value: unknown
     return cost;
   }
   if (item === "Accumulation Multiple" || item === "Ki") {
-    const entry = (value ?? {}) as Record<string, number>;
+    const entry = asKiStatRecord(value);
     return Object.values(entry).reduce((sum, amount) => sum + amount * cost, 0);
   }
   if (item.includes("Attribute Increased")) return asStringArray(value).length * cost;
   if (item === "Fatigue Resistance") return asNumber(value) * cost;
   if (item in essentialAbilities.advantages || item in essentialAbilities.disadvantages) return cost;
   return asNumber(value) * cost;
+}
+
+export const KI_STAT_DP_PURCHASES = ["Accumulation Multiple", "Ki"] as const;
+export type KiStatDpPurchase = (typeof KI_STAT_DP_PURCHASES)[number];
+
+export function isKiStatDpPurchase(name: string): name is KiStatDpPurchase {
+  return name === "Accumulation Multiple" || name === "Ki";
+}
+
+export function asKiStatRecord(value: unknown): Record<string, number> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const result: Record<string, number> = {};
+  for (const [key, amount] of Object.entries(value as Record<string, unknown>)) {
+    const units = asNumber(amount);
+    if (units > 0) result[key] = units;
+  }
+  return result;
+}
+
+/** Add Ki or accumulation multiples for one characteristic (merges into existing record). */
+export function addKiStatDpSpend(
+  character: CharacterDocument,
+  level: number,
+  name: KiStatDpPurchase,
+  stat: string,
+  units: number,
+): CharacterDocument {
+  if (units <= 0) return character;
+  const next = cloneCharacter(character);
+  const index = level === 0 ? 0 : level - 1;
+  const existing = asKiStatRecord(next.levels[index].dp[name]);
+  existing[stat] = (existing[stat] ?? 0) + units;
+  next.levels[index].dp[name] = existing;
+  return next;
+}
+
+/** Set units for one characteristic on an existing Ki stat purchase (edit flow). */
+export function setKiStatDpUnits(
+  character: CharacterDocument,
+  level: number,
+  name: KiStatDpPurchase,
+  stat: string,
+  units: number,
+): CharacterDocument {
+  const next = cloneCharacter(character);
+  const index = level === 0 ? 0 : level - 1;
+  const existing = asKiStatRecord(next.levels[index].dp[name]);
+  if (units <= 0) delete existing[stat];
+  else existing[stat] = units;
+  if (Object.keys(existing).length === 0) delete next.levels[index].dp[name];
+  else next.levels[index].dp[name] = existing;
+  return next;
 }
 
 export type DpRemaining = Record<string, number>;

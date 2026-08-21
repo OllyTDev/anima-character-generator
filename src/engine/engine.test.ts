@@ -10,7 +10,8 @@ import { parseCharacter, serializeCharacter } from "../persist/save";
 import { parseCharacterDocument } from "../persist/legacyMigration";
 import { kiAbilityCost } from "../data/kiAbilities";
 import { deriveSheet } from "./derived";
-import { combinedKiPool, addKiAbility } from "./martialKnowledge";
+import { combinedKiPool, addKiAbility, kiAccumulation } from "./martialKnowledge";
+import { addKiStatDpSpend, asKiStatRecord } from "./developmentPoints";
 
 function freelancer() {
   const character = createEmptyCharacter();
@@ -218,6 +219,20 @@ describe("ki house rules", () => {
     const sheet = deriveSheet(withKi);
     expect(sheet.kiCombined).toEqual(separated);
     expect(sheet.kiGenerationMode).toBe("combined");
+  });
+
+  it("stores accumulation multiples per ki characteristic", () => {
+    const character = syncLevels(freelancer());
+    character.levels[0].class = "Acrobatic Warrior";
+    expect(kiAccumulation(character, "AGI")).toBe(2);
+
+    const spent = addKiStatDpSpend(character, 1, "Accumulation Multiple", "AGI", 1);
+    expect(asKiStatRecord(spent.levels[0].dp["Accumulation Multiple"])).toEqual({ AGI: 1 });
+    expect(kiAccumulation(spent, "AGI")).toBe(3);
+
+    const spentAgain = addKiStatDpSpend(spent, 1, "Accumulation Multiple", "DEX", 1);
+    expect(asKiStatRecord(spentAgain.levels[0].dp["Accumulation Multiple"])).toEqual({ AGI: 1, DEX: 1 });
+    expect(kiAccumulation(spentAgain, "DEX")).toBe(2);
   });
 });
 
