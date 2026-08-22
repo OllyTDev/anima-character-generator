@@ -1142,6 +1142,66 @@ textarea { min-height: 10rem; width: 100%; }
   margin: 0;
 }
 
+.development-step-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.development-step-tabs button {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  padding: 0.45rem 0.9rem;
+  font-size: 0.95rem;
+}
+
+.development-step-tabs button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.development-supernatural-panel {
+  margin-top: 0.25rem;
+}
+
+.development-pp-summary {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  padding: 1rem 1.1rem;
+  background: var(--paper);
+}
+
+.development-pp-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.development-pp-header h3 {
+  margin: 0 0 0.35rem;
+}
+
+.development-pp-header .muted {
+  margin: 0;
+}
+
+.development-pp-spend-button {
+  flex-shrink: 0;
+  border: 1px solid var(--accent-2);
+  background: var(--accent-2);
+  color: var(--on-accent);
+  padding: 0.65rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .development-actions button {
   border: 1px solid var(--accent-2);
   background: var(--accent-2);
@@ -1151,6 +1211,333 @@ textarea { min-height: 10rem; width: 100%; }
 
 .spend-dp-dialog {
   width: min(64rem, 100%);
+}
+
+.spend-dp-tabs--wrap button {
+  font-size: 0.85rem;
+}
+
+.psychic-pp-panel {
+  min-height: 12rem;
+}
+
+.psychic-pp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.psychic-pp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.psychic-pp-row:last-child {
+  border-bottom: none;
+}
+
+.psychic-pp-power-groups {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.psychic-pp-power-group-title {
+  margin: 0 0 0.6rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--line);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.psychic-pp-power-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.psychic-pp-power-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: var(--paper);
+  text-align: left;
+}
+
+.psychic-pp-power-row-main {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.psychic-pp-power-name {
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.psychic-pp-power-meta {
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.psychic-pp-power-cta {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-2);
+  white-space: nowrap;
+}
+
+.psychic-pp-power-row--learnable {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.psychic-pp-power-row--learnable:hover {
+  border-color: var(--accent-2);
+  background: color-mix(in srgb, var(--accent-2) 8%, var(--paper));
+}
+
+.psychic-pp-power-row--learned {
+  border-color: color-mix(in srgb, var(--accent-2) 35%, var(--line));
+  background: color-mix(in srgb, var(--accent-2) 6%, var(--paper));
+}
+
+.psychic-pp-power-row--learned .psychic-pp-power-name {
+  color: var(--accent-2);
+  font-weight: 600;
+}
+
+.psychic-pp-power-row--blocked {
+  opacity: 0.82;
+}
+
+.psychic-pp-discipline-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.psychic-pp-discipline {
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  background: var(--paper);
+}
+
+.psychic-pp-discipline-summary {
+  cursor: pointer;
+  padding: 0.65rem 0.75rem;
+  list-style: none;
+}
+
+.psychic-pp-discipline-summary::-webkit-details-marker {
+  display: none;
+}
+
+.psychic-pp-discipline-summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 0.45rem;
+  transition: transform 0.15s ease;
+}
+
+.psychic-pp-discipline[open] .psychic-pp-discipline-summary::before {
+  transform: rotate(90deg);
+}
+
+.psychic-pp-discipline-count {
+  font-size: 0.9rem;
+}
+
+.psychic-pp-discipline-body {
+  padding: 0 0.75rem 0.75rem;
+  border-top: 1px solid var(--line);
+}
+
+.psychic-pp-discipline-body button {
+  margin: 0.65rem 0 0.5rem;
+}
+
+.psychic-pp-discipline-powers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.psychic-pp-discipline-powers li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.92rem;
+}
+
+.psychic-pp-discipline-powers li:last-child {
+  border-bottom: none;
+}
+
+.psychic-pp-power-known strong {
+  color: var(--accent-2);
+}
+
+.psychic-pp-global-intro {
+  margin: 0 0 1rem;
+}
+
+.psychic-pp-tier-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.psychic-pp-tier-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.psychic-pp-tier-table th,
+.psychic-pp-tier-table td {
+  border: 1px solid var(--line);
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+}
+
+.psychic-pp-tier-table th {
+  background: color-mix(in srgb, var(--paper) 88%, var(--line));
+}
+
+.psychic-pp-tier-row--achieved {
+  opacity: 0.72;
+}
+
+.psychic-pp-tier-row--current {
+  background: color-mix(in srgb, var(--accent) 18%, var(--paper));
+  font-weight: 600;
+}
+
+.psychic-pp-tier-row--next {
+  background: color-mix(in srgb, var(--accent-2) 12%, var(--paper));
+}
+
+.psychic-pp-tier-marker {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.psychic-pp-tier-marker--next {
+  background: var(--accent-2);
+  color: var(--on-accent);
+}
+
+.psychic-pp-tier-marker--achieved {
+  background: transparent;
+  color: inherit;
+  border: 1px solid var(--line);
+  font-weight: 500;
+}
+
+.psychic-pp-global-buy {
+  border: 1px solid var(--accent-2);
+  background: var(--accent-2);
+  color: var(--on-accent);
+  padding: 0.55rem 0.9rem;
+  font-weight: 600;
+}
+
+.psychic-sheet-manager {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.psychic-sheet-panel {
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  padding: 0.65rem 0.85rem;
+  background: color-mix(in srgb, var(--paper) 96%, var(--line));
+}
+
+.psychic-sheet-panel-body {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+}
+
+.psychic-sheet-free-form {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.psychic-sheet-free-form label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.psychic-sheet-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.psychic-innate-slots {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.psychic-innate-slot-row {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, auto) 1fr;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.psychic-innate-slot-label {
+  font-weight: 600;
+}
+
+.psychic-pp-summary {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.psychic-pp-summary label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.spend-dp-search {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0 1.25rem 0.5rem;
+}
+
+.sheet-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.sheet-table th,
+.sheet-table td {
+  border: 1px solid var(--line);
+  padding: 0.35rem 0.5rem;
+  text-align: left;
 }
 
 .spend-dp-tabs {
@@ -1916,6 +2303,15 @@ textarea { min-height: 10rem; width: 100%; }
   }
 
   .development-actions button {
+    width: 100%;
+  }
+
+  .development-pp-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .development-pp-spend-button {
     width: 100%;
   }
 

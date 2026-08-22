@@ -4,6 +4,7 @@ import type { Characteristic } from "../data/types";
 import { generationMethods, type GenerationMethod } from "../data/generationMethods";
 import { levelModes, type LevelMode } from "../data/levelModes";
 import { kiGenerationModes, type KiGenerationMode } from "../data/kiGenerationModes";
+import { tempPsychicEffectIds, type TempPsychicEffectId } from "../data/psychicSpending";
 
 export const SCHEMA_VERSION = 1 as const;
 
@@ -26,6 +27,24 @@ export const settingsSchema = z.object({
   generationMethod: generationMethodSchema.default("open"),
   levelMode: levelModeSchema.default("xp"),
   kiGenerationMode: kiGenerationModeSchema.default("separated"),
+});
+
+export const tempPsychicSpendSchema = z.object({
+  id: z.string(),
+  effect: z.enum(tempPsychicEffectIds),
+  pp: z.number(),
+  power: z.string().optional(),
+  at: z.string().optional(),
+});
+
+export const psychicDevelopmentSchema = z.object({
+  masteredDisciplines: z.array(z.string()).default([]),
+  learnedPowers: z.array(z.string()).default([]),
+  globalPotentialTier: z.number().int().min(0).default(0),
+  powerInvestment: z.record(z.string(), z.number()).default({}),
+  innateSlots: z.number().int().min(0).default(0),
+  innateSlotAssignments: z.array(z.string()).default([]),
+  tempSpends: z.array(tempPsychicSpendSchema).default([]),
 });
 
 export const levelSchema = z.object({
@@ -67,12 +86,28 @@ export const characterSchema = z.object({
   specializations: z.record(z.string(), z.string()).optional(),
   firstMartialArt: z.string().optional(),
   insufficientMartialKnowledge: z.unknown().optional(),
+  psychic: psychicDevelopmentSchema.optional(),
   levels: z.array(levelSchema).min(1),
 });
 
 export type CharacterDocument = z.infer<typeof characterSchema>;
 export type LevelRecord = z.infer<typeof levelSchema>;
 export type CharacterSettings = z.infer<typeof settingsSchema>;
+export type PsychicDevelopment = z.infer<typeof psychicDevelopmentSchema>;
+export type TempPsychicSpend = z.infer<typeof tempPsychicSpendSchema>;
+export type { TempPsychicEffectId };
+
+export function emptyPsychicDevelopment(): PsychicDevelopment {
+  return {
+    masteredDisciplines: [],
+    learnedPowers: [],
+    globalPotentialTier: 0,
+    powerInvestment: {},
+    innateSlots: 0,
+    innateSlotAssignments: [],
+    tempSpends: [],
+  };
+}
 
 export function emptyCharacteristics(): Record<Characteristic, number> {
   return { STR: 5, DEX: 5, AGI: 5, CON: 5, INT: 5, POW: 5, WP: 5, PER: 5 };

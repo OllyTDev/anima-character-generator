@@ -2,6 +2,7 @@ import { tables } from "../data/tables";
 import { useMemo, useState } from "react";
 import type { DerivedSheet } from "../engine/derived";
 import { KiPoolManager } from "./KiPoolManager";
+import { PsychicSheetManager } from "./PsychicSheetManager";
 
 type CharacterSheetContentProps = {
   sheet: DerivedSheet;
@@ -100,8 +101,8 @@ export function CharacterSheetContent({ sheet, variant, showTitle = true }: Char
             <Stat label="MA" value={sheet.ma} />
             <Stat label="Zeon Recovery" value={sheet.zeonRecovery} />
             <Stat label="Magic Level" value={sheet.magicLevel} />
-            <Stat label="Magic Projection (Off)" value={sheet.magicProjectionOffense} />
-            <Stat label="Magic Projection (Def)" value={sheet.magicProjectionDefense} />
+            <Stat label="Magic Projection (Attack)" value={sheet.magicProjectionOffense} />
+            <Stat label="Magic Projection (Defense)" value={sheet.magicProjectionDefense} />
           </div>
         </section>
       )}
@@ -122,18 +123,78 @@ export function CharacterSheetContent({ sheet, variant, showTitle = true }: Char
         <section className="sheet-section">
           <h2>Psychic</h2>
           <div className="stat-grid stat-grid--wide">
-            <Stat label="Psychic Points" value={sheet.psychicPoints} />
-            <Stat label="Projection (Off)" value={sheet.psychicProjectionOffense} />
-            <Stat label="Projection (Def)" value={sheet.psychicProjectionDefense} />
+            <Stat label="PP total" value={sheet.psychicPointsTotal} />
+            <Stat label="PP spent" value={sheet.psychicPointsSpent} />
+            <Stat label="PP free" value={sheet.psychicPointsFree} />
+            <Stat label="Global potential" value={`+${sheet.psychicGlobalPotentialBonus}`} />
+            <Stat label="Innate slots" value={sheet.psychicInnateSlots} />
+            <Stat label="Projection (Attack)" value={sheet.psychicProjectionOffense} />
+            <Stat label="Projection (Defense)" value={sheet.psychicProjectionDefense} />
           </div>
-          {Object.keys(sheet.psychicPowers).length ? (
-            <ul className="sheet-list">
-              {Object.entries(sheet.psychicPowers).map(([name, potential]) => (
-                <li key={name}>
-                  {name} (potential {potential})
-                </li>
-              ))}
-            </ul>
+          {sheet.psychicDisciplines.length ? (
+            <div className="sheet-subsection">
+              <h4 className="sheet-subtitle">Disciplines</h4>
+              <p>{sheet.psychicDisciplines.join(", ")}</p>
+            </div>
+          ) : null}
+          {Object.keys(sheet.psychicNaturalPowers).length ? (
+            <div className="sheet-subsection">
+              <h4 className="sheet-subtitle">Natural powers</h4>
+              <ul className="sheet-list">
+                {Object.entries(sheet.psychicNaturalPowers).map(([name, potential]) => (
+                  <li key={name}>
+                    {name} (potential {potential})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {sheet.psychicPowers.length ? (
+            <div className="sheet-subsection">
+              <h4 className="sheet-subtitle">Learned powers</h4>
+              <table className="sheet-table">
+                <thead>
+                  <tr>
+                    <th>Power</th>
+                    <th>Potential</th>
+                    <th>Level</th>
+                    <th>Investment</th>
+                    <th>Maint.</th>
+                    {full && sheet.psychicInnateSlots > 0 ? <th>Innate</th> : null}
+                  </tr>
+                </thead>
+                <tbody>
+                  {sheet.psychicPowers.map((power) => (
+                    <tr key={power.name}>
+                      <td>{power.name}{power.discipline ? ` (${power.discipline})` : power.isMatrix ? " (Matrix)" : ""}</td>
+                      <td>{power.potential}</td>
+                      <td>{power.level}</td>
+                      <td>{power.powerInvestment}</td>
+                      <td>{power.maintenance ? "Yes" : "—"}</td>
+                      {full && sheet.psychicInnateSlots > 0 ? (
+                        <td>
+                          {sheet.psychicInnateAssignments.includes(power.name) ? "Assigned" : "—"}
+                        </td>
+                      ) : null}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+          {full ? <PsychicSheetManager sheet={sheet} /> : null}
+          {!full && sheet.psychicTempSpends.length ? (
+            <details className="sheet-subsection">
+              <summary>Temporary PP spends ({sheet.psychicTempSpends.length})</summary>
+              <ul className="sheet-list">
+                {sheet.psychicTempSpends.map((item) => (
+                  <li key={item.id}>
+                    {item.effect}
+                    {item.power ? ` — ${item.power}` : ""} ({item.pp} PP)
+                  </li>
+                ))}
+              </ul>
+            </details>
           ) : null}
         </section>
       )}
