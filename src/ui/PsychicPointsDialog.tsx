@@ -3,6 +3,7 @@ import {
   GLOBAL_POTENTIAL_BONUSES,
   GLOBAL_POTENTIAL_CUMULATIVE_PP,
   incrementalPPForNextTier,
+  MAX_POWER_INVESTMENT,
   matrixPowerDefs,
   psychicDisciplineNames,
   powersInDiscipline,
@@ -58,7 +59,6 @@ export function PsychicPointsDialog({ character, open, onClose, onApply }: Psych
   const isMobile = useMediaQuery("(max-width: 600px)");
   const [tab, setTab] = useState<PsychicTab>("disciplines");
   const [search, setSearch] = useState("");
-  const [selectedPower, setSelectedPower] = useState("");
 
   const total = totalPsychicPoints(character);
   const spent = permanentPPSpent(character);
@@ -72,7 +72,6 @@ export function PsychicPointsDialog({ character, open, onClose, onApply }: Psych
     if (!open) return;
     setTab("disciplines");
     setSearch("");
-    setSelectedPower(learnedPowers(character)[0] ?? "");
     // Reset form state only when the dialog opens, not on each character update.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: avoid tab reset while spending
   }, [open]);
@@ -194,12 +193,25 @@ export function PsychicPointsDialog({ character, open, onClose, onApply }: Psych
                   const status = disciplineStatus(discipline);
                   const canBuy = canMasterDiscipline(character, discipline);
                   const mastered = hasDiscipline(character, discipline);
+                  const granted = grantedDisciplines(character).includes(discipline);
                   return (
-                    <details key={discipline} className="psychic-pp-discipline" open={Boolean(search.trim())}>
+                    <details
+                      key={discipline}
+                      className={[
+                        "psychic-pp-discipline",
+                        mastered ? "psychic-pp-discipline--mastered" : "psychic-pp-discipline--unmastered",
+                      ].join(" ")}
+                      open={Boolean(search.trim())}
+                    >
                       <summary className="psychic-pp-discipline-summary">
-                        <span>
+                        <span className="psychic-pp-discipline-heading">
                           <strong>{discipline}</strong>
-                          <span className="muted"> — {status}</span>
+                          {mastered ? (
+                            <span className="psychic-pp-discipline-badge">
+                              {granted ? "Granted" : "Mastered"}
+                            </span>
+                          ) : null}
+                          <span className="muted psychic-pp-discipline-status"> — {status}</span>
                           <span className="muted psychic-pp-discipline-count"> · {powers.length} powers</span>
                         </span>
                       </summary>
@@ -238,9 +250,30 @@ export function PsychicPointsDialog({ character, open, onClose, onApply }: Psych
               {powerGroups.length === 0 ? (
                 <p className="muted">Master a discipline or unlock matrix powers to learn abilities.</p>
               ) : (
-                powerGroups.map((group) => (
-                  <section key={group.title} className="psychic-pp-power-group">
-                    <h3 className="psychic-pp-power-group-title">{group.title}</h3>
+                powerGroups.map((group) => {
+                  const groupLearnedCount = group.powers.filter((power) => learned.includes(power.name)).length;
+                  const groupMastered =
+                    group.title === "Matrix powers"
+                      ? groupLearnedCount > 0
+                      : hasDiscipline(character, group.title);
+                  return (
+                  <section
+                    key={group.title}
+                    className={[
+                      "psychic-pp-power-group",
+                      groupMastered ? "psychic-pp-power-group--mastered" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    <h3 className="psychic-pp-power-group-title">
+                      {group.title}
+                      {groupLearnedCount > 0 ? (
+                        <span className="psychic-pp-discipline-badge">
+                          {groupLearnedCount} learned
+                        </span>
+                      ) : null}
+                    </h3>
                     <ul className="psychic-pp-power-rows">
                       {group.powers.map((power) => {
                         const known = learned.includes(power.name);
@@ -275,7 +308,14 @@ export function PsychicPointsDialog({ character, open, onClose, onApply }: Psych
                                 ].join(" ")}
                               >
                                 <span className="psychic-pp-power-row-main">
-                                  <span className="psychic-pp-power-name">{power.name}</span>
+                                  <span className="psychic-pp-power-name">
+                                    {power.name}
+                                    {known ? (
+                                      <span className="psychic-pp-discipline-badge psychic-pp-power-badge">
+                                        Learned
+                                      </span>
+                                    ) : null}
+                                  </span>
                                   <span className="psychic-pp-power-meta muted">{meta}</span>
                                 </span>
                               </div>
@@ -285,7 +325,8 @@ export function PsychicPointsDialog({ character, open, onClose, onApply }: Psych
                       })}
                     </ul>
                   </section>
-                ))
+                  );
+                })
               )}
             </div>
           )}
@@ -388,36 +429,67 @@ export function PsychicPointsDialog({ character, open, onClose, onApply }: Psych
           )}
 
           {tab === "investment" && (
-            <div className="psychic-pp-summary">
+            <div className="psychic-pp-summary psychic-pp-investment">
               {learned.length === 0 ? (
                 <p className="muted">Learn a power first to invest PP.</p>
               ) : (
                 <>
-                  <label>
-                    Power
-                    <select value={selectedPower} onChange={(event) => setSelectedPower(event.target.value)}>
-                      {learned.map((name) => (
-                        <option key={name} value={name}>
-                          {name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {selectedPower ? (
-                    <>
-                      <p className="muted">
-                        Investment: {normalizePsychic(character).powerInvestment?.[selectedPower] ?? 0} / 10 PP ·
-                        Potential {powerPotential(character, selectedPower)}
-                      </p>
-                      <button
-                        type="button"
-                        disabled={!canInvestInPower(character, selectedPower)}
-                        onClick={() => apply(investInPower(character, selectedPower))}
-                      >
-                        Invest 1 PP (+10 potential)
-                      </button>
-                    </>
-                  ) : null}
+                  <p className="muted psychic-pp-investment-intro">
+                    Invest 1 Psychic Point per power for +10 potential (max {MAX_POWER_INVESTMENT} Psychic Points per power).
+                  </p>
+                  <div className="psychic-pp-tier-table-wrap">
+                    <table className="psychic-pp-tier-table psychic-pp-investment-table">
+                      <thead>
+                        <tr>
+                          <th>Power</th>
+                          <th>Investment</th>
+                          <th>Potential</th>
+                          <th>Spend</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {learned.map((powerName) => {
+                          const def = psychicPowerDef(powerName);
+                          const investment = normalizePsychic(character).powerInvestment?.[powerName] ?? 0;
+                          const atMax = investment >= MAX_POWER_INVESTMENT;
+                          const canInvest = canInvestInPower(character, powerName);
+                          return (
+                            <tr
+                              key={powerName}
+                              className={atMax ? "psychic-pp-investment-row--max" : undefined}
+                            >
+                              <td>
+                                <strong>{powerName}</strong>
+                                {def ? (
+                                  <span className="muted psychic-pp-investment-power-meta">
+                                    {" "}
+                                    {def.isMatrix ? "Matrix" : def.discipline ? `${def.discipline}` : ""}
+                                  </span>
+                                ) : null}
+                              </td>
+                              <td>
+                                {investment} / {MAX_POWER_INVESTMENT} PP
+                              </td>
+                              <td>{powerPotential(character, powerName)}</td>
+                              <td className="psychic-pp-investment-action">
+                                {atMax ? (
+                                  <span className="psychic-pp-discipline-badge">Max</span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={!canInvest}
+                                    onClick={() => apply(investInPower(character, powerName))}
+                                  >
+                                    +1 PP
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </>
               )}
             </div>
@@ -425,10 +497,13 @@ export function PsychicPointsDialog({ character, open, onClose, onApply }: Psych
 
           {tab === "innate" && (
             <div className="psychic-pp-summary">
-              <p>
+              <span className="muted psychic-pp-innate-slots-intro">
+                    Some powers can be maintained. For each maintained power, you need to have a free innate slot.
+              </span>
+              <h1>
                 Innate slots: <strong>{innateSlots}</strong>
-              </p>
-              <button type="button" disabled={!canBuyInnateSlot(character)} onClick={() => apply(buyInnateSlot(character))}>
+              </h1>
+              <button type="button" className="wizard-continue" disabled={!canBuyInnateSlot(character)} onClick={() => apply(buyInnateSlot(character))}>
                 Buy innate slot (2 PP)
               </button>
             </div>

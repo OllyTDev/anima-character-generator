@@ -15,6 +15,11 @@
   --shadow: rgba(0, 0, 0, 0.55);
   --selected: rgba(255, 255, 255, 0.08);
   --input-bg: #141414;
+  --psychic-discipline-mastered-bg: #1a2e24;
+  --psychic-discipline-mastered-border: #3a6b52;
+  --psychic-discipline-mastered-text: #b8e0c8;
+  --psychic-discipline-mastered-badge-bg: #2d523f;
+  --psychic-discipline-mastered-badge-text: #dff3e8;
   font-family: "Segoe UI", "Helvetica Neue", sans-serif;
   background: var(--bg);
   color: var(--ink);
@@ -36,6 +41,11 @@
   --shadow: rgba(28, 25, 20, 0.18);
   --selected: rgba(107, 58, 34, 0.08);
   --input-bg: #ffffff;
+  --psychic-discipline-mastered-bg: #e6f2ea;
+  --psychic-discipline-mastered-border: #2f4a3c;
+  --psychic-discipline-mastered-text: #1e4a34;
+  --psychic-discipline-mastered-badge-bg: #2f4a3c;
+  --psychic-discipline-mastered-badge-text: #ffffff;
 }
 
 * { box-sizing: border-box; }
@@ -1246,12 +1256,21 @@ textarea { min-height: 10rem; width: 100%; }
 }
 
 .psychic-pp-power-group-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
   margin: 0 0 0.6rem;
   padding-bottom: 0.4rem;
   border-bottom: 2px solid var(--line);
   font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+}
+
+.psychic-pp-power-group--mastered .psychic-pp-power-group-title {
+  border-bottom-color: var(--psychic-discipline-mastered-border);
+  color: var(--psychic-discipline-mastered-text);
 }
 
 .psychic-pp-power-rows {
@@ -1303,26 +1322,45 @@ textarea { min-height: 10rem; width: 100%; }
   cursor: pointer;
   font: inherit;
   color: inherit;
+  opacity: 0.9;
+  background: color-mix(in srgb, var(--paper) 92%, var(--line));
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .psychic-pp-power-row--learnable:hover {
+  opacity: 1;
   border-color: var(--accent-2);
   background: color-mix(in srgb, var(--accent-2) 8%, var(--paper));
 }
 
 .psychic-pp-power-row--learned {
-  border-color: color-mix(in srgb, var(--accent-2) 35%, var(--line));
-  background: color-mix(in srgb, var(--accent-2) 6%, var(--paper));
+  opacity: 1;
+  border-color: var(--psychic-discipline-mastered-border);
+  background: var(--psychic-discipline-mastered-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--psychic-discipline-mastered-border) 35%, transparent);
 }
 
 .psychic-pp-power-row--learned .psychic-pp-power-name {
-  color: var(--accent-2);
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  color: var(--psychic-discipline-mastered-text);
   font-weight: 600;
+}
+
+.psychic-pp-power-row--learned .psychic-pp-power-meta {
+  color: color-mix(in srgb, var(--psychic-discipline-mastered-text) 75%, var(--muted));
+}
+
+.psychic-pp-power-badge {
+  font-size: 0.68rem;
+  vertical-align: middle;
 }
 
 .psychic-pp-power-row--blocked {
   opacity: 0.82;
+  background: color-mix(in srgb, var(--paper) 92%, var(--line));
 }
 
 .psychic-pp-discipline-list {
@@ -1334,6 +1372,53 @@ textarea { min-height: 10rem; width: 100%; }
   border: 1px solid var(--line);
   border-radius: 0.4rem;
   background: var(--paper);
+}
+
+.psychic-pp-discipline--unmastered {
+  opacity: 0.88;
+  background: color-mix(in srgb, var(--paper) 92%, var(--line));
+}
+
+.psychic-pp-discipline--mastered {
+  opacity: 1;
+  border-color: var(--psychic-discipline-mastered-border);
+  background: var(--psychic-discipline-mastered-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--psychic-discipline-mastered-border) 35%, transparent);
+}
+
+.psychic-pp-discipline--mastered .psychic-pp-discipline-summary {
+  color: var(--psychic-discipline-mastered-text);
+}
+
+.psychic-pp-discipline--mastered .psychic-pp-discipline-summary strong {
+  color: var(--psychic-discipline-mastered-text);
+}
+
+.psychic-pp-discipline--mastered .psychic-pp-discipline-body {
+  border-top-color: color-mix(in srgb, var(--psychic-discipline-mastered-border) 55%, var(--line));
+}
+
+.psychic-pp-discipline-heading {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.psychic-pp-discipline-badge {
+  display: inline-block;
+  padding: 0.08rem 0.45rem;
+  border-radius: 999px;
+  background: var(--psychic-discipline-mastered-badge-bg);
+  color: var(--psychic-discipline-mastered-badge-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.psychic-pp-discipline--mastered .psychic-pp-discipline-status {
+  color: color-mix(in srgb, var(--psychic-discipline-mastered-text) 75%, var(--muted));
 }
 
 .psychic-pp-discipline-summary {
@@ -1387,7 +1472,34 @@ textarea { min-height: 10rem; width: 100%; }
 }
 
 .psychic-pp-power-known strong {
-  color: var(--accent-2);
+  color: var(--psychic-discipline-mastered-text);
+}
+
+.psychic-pp-investment-intro {
+  margin: 0 0 0.75rem;
+}
+
+.psychic-pp-investment-power-meta {
+  display: block;
+  font-size: 0.82rem;
+  margin-top: 0.1rem;
+}
+
+.psychic-pp-investment-action {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.psychic-pp-investment-row--max {
+  background: var(--psychic-discipline-mastered-bg);
+}
+
+.psychic-pp-investment-row--max td {
+  color: var(--psychic-discipline-mastered-text);
+}
+
+.psychic-pp-investment-row--max .muted {
+  color: color-mix(in srgb, var(--psychic-discipline-mastered-text) 75%, var(--muted));
 }
 
 .psychic-pp-global-intro {
