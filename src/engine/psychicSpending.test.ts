@@ -4,13 +4,17 @@ import { spendDp } from "./developmentPoints";
 import { createEmptyCharacter } from "../schema/character";
 import {
   buyInnateSlot,
+  basePsychicPotential,
   canBuyDisciplinesWithPP,
   canLearnPower,
   canMasterDiscipline,
+  canTempSpend,
   freePPRemaining,
   globalPotentialBonus,
   investInPower,
+  innateSlotPotential,
   learnPower,
+  maintainableLearnedPowers,
   masterDiscipline,
   permanentPPSpent,
   powerPotential,
@@ -19,6 +23,7 @@ import {
   setInnateSlotAssignment,
   tempSpend,
   undoTempSpend,
+  unlearnedPowersInAccessibleDisciplines,
   unlearnPower,
   unmasterDiscipline,
   innateSlotAssignments,
@@ -128,6 +133,7 @@ describe("psychicSpending", () => {
     character = raiseGlobalPotential(character);
     character = investInPower(character, "Area Scanning");
     expect(powerPotential(character, "Area Scanning")).toBe(80 + 10 + 10);
+    expect(basePsychicPotential(character)).toBe(80 + 10);
   });
 
   it("removes PP spends and restores free PP", () => {
@@ -172,5 +178,38 @@ describe("psychicSpending", () => {
     expect(innateSlotAssignments(character)).toEqual(["Area Scanning"]);
     character = setInnateSlotAssignment(character, 0, "");
     expect(innateSlotAssignments(character)).toEqual([""]);
+  });
+
+  it("lists unlearned powers only from accessible disciplines for temporary access", () => {
+    let character = psychicWithOneDiscipline("Telepathy");
+    const unlearned = unlearnedPowersInAccessibleDisciplines(character);
+    expect(unlearned).toContain("Area Scanning");
+    expect(unlearned).not.toContain("Create Energy");
+    character = learnPower(character, "Area Scanning");
+    expect(unlearnedPowersInAccessibleDisciplines(character)).not.toContain("Area Scanning");
+  });
+
+  it("lists maintainable learned powers for improve innate", () => {
+    let character = psychicWithOneDiscipline("Telepathy");
+    expect(maintainableLearnedPowers(character)).toEqual([]);
+    character = learnPower(character, "Area Scanning");
+    expect(maintainableLearnedPowers(character)).toEqual(["Area Scanning"]);
+  });
+
+  it("validates temp spend power choices per effect", () => {
+    let character = withExtraPP(psychicWithOneDiscipline("Telepathy"), 2);
+    character = learnPower(character, "Area Scanning");
+    expect(canTempSpend(character, "temporary-power", "Area Scanning")).toBe(false);
+    expect(canTempSpend(character, "temporary-power", "Mental Research")).toBe(true);
+    expect(canTempSpend(character, "improve-innate", "Area Scanning")).toBe(true);
+    expect(canTempSpend(character, "improve-innate", "Mental Research")).toBe(false);
+  });
+
+  it("includes improve-innate temp spends in innate slot potential", () => {
+    let character = withExtraPP(psychicWithOneDiscipline("Telepathy"), 3);
+    character = learnPower(character, "Area Scanning");
+    expect(innateSlotPotential(character, "Area Scanning")).toBe(powerPotential(character, "Area Scanning"));
+    character = tempSpend(character, "improve-innate", "Area Scanning");
+    expect(innateSlotPotential(character, "Area Scanning")).toBe(powerPotential(character, "Area Scanning") + 20);
   });
 });

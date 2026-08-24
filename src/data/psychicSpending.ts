@@ -28,17 +28,18 @@ export type TempPsychicEffectId = (typeof tempPsychicEffectIds)[number];
 export type TempPsychicEffectDef = {
   id: TempPsychicEffectId;
   label: string;
+  desc: string;
   pp: number;
   needsPower: boolean;
 };
 
 /** Placeholder costs — tune in data when book values are confirmed. */
 export const TEMP_PSYCHIC_EFFECTS: TempPsychicEffectDef[] = [
-  { id: "improve-projection", label: "Improve Psychic Projection", pp: 1, needsPower: false },
-  { id: "increase-potential", label: "Increase Psychic Potential", pp: 1, needsPower: false },
-  { id: "eliminate-fatigue", label: "Eliminate fatigue", pp: 1, needsPower: false },
-  { id: "temporary-power", label: "Temporary access to a power", pp: 1, needsPower: true },
-  { id: "improve-innate", label: "Improve innate power", pp: 1, needsPower: true },
+  { id: "improve-projection", label: "Improve Psychic Projection", desc:"Improves projection for 1 turn by 10 per pp spend. Max 5.", pp: 1, needsPower: false },
+  { id: "increase-potential", label: "Increase Psychic Potential", desc:"Improves potential for 1 turn by 20 per pp spend. Max 5.", pp: 1, needsPower: false },
+  { id: "eliminate-fatigue", label: "Eliminate fatigue", desc:"On failure, many psychic abilities induce fatigue. Spending 1 free PP will eliminate this consequence.", pp: 1, needsPower: false },
+  { id: "temporary-power", label: "Temporary access to a power", desc:"Temporarily gain access to a power from a discipline you already have. Temporary powers cannot be maintained in innate slots.", pp: 1, needsPower: true },
+  { id: "improve-innate", label: "Improve innate power", desc:"Spend PP to improve the power of an innate slot. Each point gives +20 potential. Max 5.", pp: 1, needsPower: true },
 ];
 
 export type PsychicPowerDef = {

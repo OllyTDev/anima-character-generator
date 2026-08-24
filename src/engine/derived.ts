@@ -36,6 +36,7 @@ import {
   zeonRecovery,
 } from "./magic";
 import {
+  basePsychicPotential,
   freePPRemaining,
   globalPotentialBonus,
   innateSlotAssignments,
@@ -140,6 +141,8 @@ export function deriveSheet(character: CharacterDocument) {
     psychicInnateSlots: normalizePsychic(character).innateSlots ?? 0,
     psychicInnateAssignments: innateSlotAssignments(character),
     psychicMaintainablePowers: maintainableLearnedPowers(character),
+    psychicWpPotential: characteristic(character, "WP") * 10,
+    psychicBasePotential: basePsychicPotential(character),
     psychicGlobalPotentialBonus: globalPotentialBonus(character),
     psychicTempSpends: normalizePsychic(character).tempSpends ?? [],
     disciplineAccess: disciplineAccess(character),

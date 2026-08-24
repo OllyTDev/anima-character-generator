@@ -47,6 +47,18 @@ type PsychicPointsDialogProps = {
 
 type PsychicTab = "disciplines" | "powers" | "global" | "investment" | "innate";
 
+type InvestmentSortKey = "power" | "investment" | "potential";
+type SortDirection = "asc" | "desc";
+
+type InvestmentRow = {
+  powerName: string;
+  def: ReturnType<typeof psychicPowerDef>;
+  investment: number;
+  potential: number;
+  atMax: boolean;
+  canInvest: boolean;
+};
+
 const tabs: { id: PsychicTab; label: string }[] = [
   { id: "disciplines", label: "Disciplines" },
   { id: "powers", label: "Powers" },
@@ -59,6 +71,10 @@ export function PsychicPointsDialog({ character, open, onClose, onApply }: Psych
   const isMobile = useMediaQuery("(max-width: 600px)");
   const [tab, setTab] = useState<PsychicTab>("disciplines");
   const [search, setSearch] = useState("");
+  const [investmentSort, setInvestmentSort] = useState<{ key: InvestmentSortKey; direction: SortDirection }>({
+    key: "power",
+    direction: "asc",
+  });
 
   const total = totalPsychicPoints(character);
   const spent = permanentPPSpent(character);
@@ -72,6 +88,7 @@ export function PsychicPointsDialog({ character, open, onClose, onApply }: Psych
     if (!open) return;
     setTab("disciplines");
     setSearch("");
+    setInvestmentSort({ key: "power", direction: "asc" });
     // Reset form state only when the dialog opens, not on each character update.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: avoid tab reset while spending
   }, [open]);
@@ -123,9 +140,63 @@ export function PsychicPointsDialog({ character, open, onClose, onApply }: Psych
     return groups;
   }, [character, search, accessMode]);
 
+  const investmentRows = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const psychic = normalizePsychic(character);
+    const rows: InvestmentRow[] = learned.map((powerName) => {
+      const def = psychicPowerDef(powerName);
+      const investment = psychic.powerInvestment?.[powerName] ?? 0;
+      return {
+        powerName,
+        def,
+        investment,
+        potential: powerPotential(character, powerName),
+        atMax: investment >= MAX_POWER_INVESTMENT,
+        canInvest: canInvestInPower(character, powerName),
+      };
+    });
+
+    const filtered = query
+      ? rows.filter((row) => {
+          const haystack = [
+            row.powerName,
+            row.def?.discipline ?? "",
+            row.def?.isMatrix ? "matrix" : "",
+          ]
+            .join(" ")
+            .toLowerCase();
+          return haystack.includes(query);
+        })
+      : rows;
+
+    const direction = investmentSort.direction === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      if (investmentSort.key === "power") {
+        return direction * a.powerName.localeCompare(b.powerName);
+      }
+      if (investmentSort.key === "investment") {
+        return direction * (a.investment - b.investment) || a.powerName.localeCompare(b.powerName);
+      }
+      return direction * (a.potential - b.potential) || a.powerName.localeCompare(b.powerName);
+    });
+  }, [character, learned, search, investmentSort]);
+
   if (!open) return null;
 
   const apply = (next: CharacterDocument) => onApply(next);
+
+  const toggleInvestmentSort = (key: InvestmentSortKey) => {
+    setInvestmentSort((current) =>
+      current.key === key
+        ? { key, direction: current.direction === "asc" ? "desc" : "asc" }
+        : { key, direction: "asc" },
+    );
+  };
+
+  const investmentSortAria = (key: InvestmentSortKey): "ascending" | "descending" | "none" => {
+    if (investmentSort.key !== key) return "none";
+    return investmentSort.direction === "asc" ? "ascending" : "descending";
+  };
 
   const disciplineStatus = (discipline: string) => {
     if (grantedDisciplines(character).includes(discipline)) return "Granted";
@@ -176,7 +247,7 @@ export function PsychicPointsDialog({ character, open, onClose, onApply }: Psych
           ))}
         </div>
 
-        {(tab === "disciplines" || tab === "powers") && (
+        {(tab === "disciplines" || tab === "powers" || tab === "investment") && (
           <label className="spend-dp-search">
             Search
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Filter…" />
@@ -441,52 +512,96 @@ export function PsychicPointsDialog({ character, open, onClose, onApply }: Psych
                     <table className="psychic-pp-tier-table psychic-pp-investment-table">
                       <thead>
                         <tr>
-                          <th>Power</th>
-                          <th>Investment</th>
-                          <th>Potential</th>
-                          <th>Spend</th>
+                          <th scope="col">
+                            <button
+                              type="button"
+                              className={`psychic-pp-sort-header${investmentSort.key === "power" ? " psychic-pp-sort-header--active" : ""}`}
+                              aria-sort={investmentSortAria("power")}
+                              onClick={() => toggleInvestmentSort("power")}
+                            >
+                              Power
+                              {investmentSort.key === "power" ? (
+                                <span className="psychic-pp-sort-indicator" aria-hidden="true">
+                                  {investmentSort.direction === "asc" ? " ▲" : " ▼"}
+                                </span>
+                              ) : null}
+                            </button>
+                          </th>
+                          <th scope="col">
+                            <button
+                              type="button"
+                              className={`psychic-pp-sort-header${investmentSort.key === "investment" ? " psychic-pp-sort-header--active" : ""}`}
+                              aria-sort={investmentSortAria("investment")}
+                              onClick={() => toggleInvestmentSort("investment")}
+                            >
+                              Investment
+                              {investmentSort.key === "investment" ? (
+                                <span className="psychic-pp-sort-indicator" aria-hidden="true">
+                                  {investmentSort.direction === "asc" ? " ▲" : " ▼"}
+                                </span>
+                              ) : null}
+                            </button>
+                          </th>
+                          <th scope="col">
+                            <button
+                              type="button"
+                              className={`psychic-pp-sort-header${investmentSort.key === "potential" ? " psychic-pp-sort-header--active" : ""}`}
+                              aria-sort={investmentSortAria("potential")}
+                              onClick={() => toggleInvestmentSort("potential")}
+                            >
+                              Potential
+                              {investmentSort.key === "potential" ? (
+                                <span className="psychic-pp-sort-indicator" aria-hidden="true">
+                                  {investmentSort.direction === "asc" ? " ▲" : " ▼"}
+                                </span>
+                              ) : null}
+                            </button>
+                          </th>
+                          <th scope="col">Spend</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {learned.map((powerName) => {
-                          const def = psychicPowerDef(powerName);
-                          const investment = normalizePsychic(character).powerInvestment?.[powerName] ?? 0;
-                          const atMax = investment >= MAX_POWER_INVESTMENT;
-                          const canInvest = canInvestInPower(character, powerName);
-                          return (
+                        {investmentRows.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="muted">
+                              No powers match your search.
+                            </td>
+                          </tr>
+                        ) : (
+                          investmentRows.map((row) => (
                             <tr
-                              key={powerName}
-                              className={atMax ? "psychic-pp-investment-row--max" : undefined}
+                              key={row.powerName}
+                              className={row.atMax ? "psychic-pp-investment-row--max" : undefined}
                             >
                               <td>
-                                <strong>{powerName}</strong>
-                                {def ? (
+                                <strong>{row.powerName}</strong>
+                                {row.def ? (
                                   <span className="muted psychic-pp-investment-power-meta">
                                     {" "}
-                                    {def.isMatrix ? "Matrix" : def.discipline ? `${def.discipline}` : ""}
+                                    {row.def.isMatrix ? "Matrix" : row.def.discipline ? `${row.def.discipline}` : ""}
                                   </span>
                                 ) : null}
                               </td>
                               <td>
-                                {investment} / {MAX_POWER_INVESTMENT} PP
+                                {row.investment} / {MAX_POWER_INVESTMENT} PP
                               </td>
-                              <td>{powerPotential(character, powerName)}</td>
+                              <td>{row.potential}</td>
                               <td className="psychic-pp-investment-action">
-                                {atMax ? (
+                                {row.atMax ? (
                                   <span className="psychic-pp-discipline-badge">Max</span>
                                 ) : (
                                   <button
                                     type="button"
-                                    disabled={!canInvest}
-                                    onClick={() => apply(investInPower(character, powerName))}
+                                    disabled={!row.canInvest}
+                                    onClick={() => apply(investInPower(character, row.powerName))}
                                   >
                                     +1 PP
                                   </button>
                                 )}
                               </td>
                             </tr>
-                          );
-                        })}
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>

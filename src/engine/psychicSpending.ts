@@ -9,6 +9,7 @@ import {
   MATRIX_DISCIPLINE,
   POWER_INVESTMENT_COST,
   POWER_LEARN_COST,
+  powersInDiscipline,
   psychicPowerDef,
   TEMP_PSYCHIC_EFFECTS,
   type TempPsychicEffectId,
@@ -111,10 +112,24 @@ export function globalPotentialBonus(character: CharacterDocument): number {
   return globalPotentialBonusForTier(normalizePsychic(character).globalPotentialTier ?? 0);
 }
 
+/** Base psychic potential for a power with no per-power investment (WP×10 + global). */
+export function basePsychicPotential(character: CharacterDocument): number {
+  return characteristic(character, "WP") * 10 + globalPotentialBonus(character);
+}
+
 export function powerPotential(character: CharacterDocument, powerName: string): number {
   const base = characteristic(character, "WP") * 10;
   const investment = normalizePsychic(character).powerInvestment?.[powerName] ?? 0;
   return base + globalPotentialBonus(character) + investment * 10;
+}
+
+/** Potential for a power maintained in an innate slot, including temporary improve-innate spends. */
+export function innateSlotPotential(character: CharacterDocument, powerName: string): number {
+  const base = powerPotential(character, powerName);
+  const bonus = (normalizePsychic(character).tempSpends ?? [])
+    .filter((item) => item.effect === "improve-innate" && item.power === powerName)
+    .reduce((sum, item) => sum + item.pp * 20, 0);
+  return base + bonus;
 }
 
 function hasLevelGateMet(character: CharacterDocument, powerName: string): boolean {
@@ -214,6 +229,18 @@ export function maintainableLearnedPowers(character: CharacterDocument): string[
   return learnedPowers(character)
     .filter((name) => psychicPowerDef(name)?.maintenance)
     .sort((a, b) => a.localeCompare(b));
+}
+
+/** Unlearned powers from disciplines the character already has (excludes matrix). */
+export function unlearnedPowersInAccessibleDisciplines(character: CharacterDocument): string[] {
+  const learned = new Set(learnedPowers(character));
+  const names: string[] = [];
+  for (const discipline of masteredDisciplines(character)) {
+    for (const def of powersInDiscipline(discipline)) {
+      if (!learned.has(def.name)) names.push(def.name);
+    }
+  }
+  return names.sort((a, b) => a.localeCompare(b));
 }
 
 export function setInnateSlotAssignment(
@@ -389,7 +416,13 @@ export function canTempSpend(character: CharacterDocument, effectId: TempPsychic
   const def = TEMP_PSYCHIC_EFFECTS.find((item) => item.id === effectId);
   if (!def) return false;
   if (def.needsPower && !power) return false;
-  if (def.needsPower && power && !psychicPowerDef(power)) return false;
+  if (def.needsPower && power) {
+    if (!psychicPowerDef(power)) return false;
+    if (effectId === "temporary-power" && !unlearnedPowersInAccessibleDisciplines(character).includes(power)) {
+      return false;
+    }
+    if (effectId === "improve-innate" && !maintainableLearnedPowers(character).includes(power)) return false;
+  }
   return freePPRemaining(character) >= def.pp;
 }
 
