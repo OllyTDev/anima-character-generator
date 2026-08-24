@@ -5,6 +5,12 @@ import { ability } from "./ability";
 import { characteristic, modifier } from "./characteristics";
 import { hasModule } from "./developmentPoints";
 import { firstDp, hasGift } from "./helpers";
+import {
+  canSpendPsychicPoints,
+  learnedPowers,
+  powerPotential,
+  psychicAccessMode,
+} from "./psychicSpending";
 
 export function ma(character: CharacterDocument): number {
   const base = tables.base_ma[characteristic(character, "POW")] ?? 0;
@@ -133,7 +139,7 @@ export function psychicPoints(character: CharacterDocument, until?: number): num
   return result;
 }
 
-export function psychicPowers(character: CharacterDocument): Record<string, number> {
+export function naturalPsychicPowers(character: CharacterDocument): Record<string, number> {
   const info = character.advantages["Access to Natural Psychic Powers"] as { Points?: number; Power?: string } | undefined;
   const powers: Record<string, number> = {};
   if (info?.Power) {
@@ -141,6 +147,14 @@ export function psychicPowers(character: CharacterDocument): Record<string, numb
     if (info.Points === 2) potential = 140;
     if (info.Points === 3) potential = 180;
     powers[info.Power] = potential;
+  }
+  return powers;
+}
+
+export function psychicPowers(character: CharacterDocument): Record<string, number> {
+  const powers = { ...naturalPsychicPowers(character) };
+  for (const name of learnedPowers(character)) {
+    powers[name] = powerPotential(character, name);
   }
   return powers;
 }
@@ -181,10 +195,24 @@ export function usesPsychic(character: CharacterDocument): boolean {
   );
 }
 
-/** Whether psychic stats should appear on the character sheet. */
-export function showsPsychicStats(character: CharacterDocument): boolean {
+function hasPsychicInvestments(character: CharacterDocument): boolean {
+  const psychic = character.psychic;
+  if (!psychic) return false;
   return (
-    "Access to Natural Psychic Powers" in character.advantages ||
-    "Access to One Psychic Discipline" in character.advantages
+    (psychic.masteredDisciplines?.length ?? 0) > 0 ||
+    (psychic.learnedPowers?.length ?? 0) > 0 ||
+    (psychic.globalPotentialTier ?? 0) > 0 ||
+    Object.keys(psychic.powerInvestment ?? {}).length > 0 ||
+    (psychic.innateSlots ?? 0) > 0 ||
+    (psychic.tempSpends?.length ?? 0) > 0
   );
 }
+
+/** Whether psychic stats should appear on the character sheet. */
+export function showsPsychicStats(character: CharacterDocument): boolean {
+  const mode = psychicAccessMode(character);
+  if (mode !== "none") return true;
+  return usesPsychic(character) || hasPsychicInvestments(character);
+}
+
+export { canSpendPsychicPoints as canUsePsychicSpending };

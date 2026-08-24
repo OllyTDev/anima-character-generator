@@ -13,5 +13,11 @@ export { metamagic } from "./metamagic";
 export { powers } from "./powers";
 export { primaries } from "./primaries";
 export { psychicDisciplines } from "./psychicDisciplines";
+export {
+  GLOBAL_POTENTIAL_BONUSES,
+  GLOBAL_POTENTIAL_CUMULATIVE_PP,
+  TEMP_PSYCHIC_EFFECTS,
+  type TempPsychicEffectId,
+} from "./psychicSpending";
 export { tables } from "./tables";
 export type { Characteristic, ClassDef, PrimaryCategory } from "./types";

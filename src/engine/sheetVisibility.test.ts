@@ -34,8 +34,8 @@ describe("sheet visibility", () => {
     expect(deriveSheet(psychic).showsPsychicStats).toBe(true);
   });
 
-  it("does not show psychic stats for Free Access alone", () => {
+  it("shows psychic stats for Free Access", () => {
     const character = addAdvantage(createEmptyCharacter(), "Free Access to Any Psychic Discipline", 2);
-    expect(showsPsychicStats(character)).toBe(false);
+    expect(showsPsychicStats(character)).toBe(true);
   });
 });

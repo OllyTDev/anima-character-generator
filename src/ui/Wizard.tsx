@@ -17,7 +17,16 @@ import { hasEditableOption, dpDisplayCategories, dpDisplayCategoryLabel, groupDp
 import { characteristicTotal } from "../engine/characteristics";
 import { characteristicPointLimit } from "../data/generationMethods";
 import { characterLevel, MAX_CHARACTER_LEVEL, xpFromLevel } from "../engine/helpers";
+import { canUsePsychicSpending } from "../engine/magic";
 import { mkPurchasesForLevel, mkRemaining, removeKiAbility } from "../engine/martialKnowledge";
+import {
+  canEditPsychicDevelopment,
+  freePPRemaining,
+  hasPsychicDevelopment,
+  psychicDevelopmentEntries,
+  removePsychicDevelopmentEntry,
+  totalPsychicPoints,
+} from "../engine/psychicSpending";
 import type { Characteristic } from "../data/types";
 import type { CharacterDocument, LevelRecord } from "../schema/character";
 import { useCharacterStore, useSheet, type WizardStep } from "../store/characterStore";
@@ -31,6 +40,7 @@ import { FullCharacterSheet } from "./FullCharacterSheet";
 import { KiAbilitiesDialog } from "./KiAbilitiesDialog";
 import { NaturalBonusDialog, naturalBonusAmount } from "./NaturalBonusDialog";
 import { NumberInput } from "./NumberInput";
+import { PsychicPointsDialog } from "./PsychicPointsDialog";
 import { SpendDpDialog } from "./SpendDpDialog";
 import { useMediaQuery } from "./useMediaQuery";
 
@@ -306,7 +316,28 @@ function CreatureStep() {
 function EssentialStep() {
   const { character, patch, setStep } = useCharacterStore();
   const [selected, setSelected] = useState(Object.keys(essentialAbilities.advantages)[0]);
+  const [option, setOption] = useState("");
   const dp = character.levels[0].dp;
+  const isAdvantage = selected in essentialAbilities.advantages;
+  const def = isAdvantage ? essentialAbilities.advantages[selected] : essentialAbilities.disadvantages[selected];
+  const optionChoices = def?.Options?.filter((item) => !String(item).startsWith("------------")) ?? [];
+  const needsOption = optionChoices.length > 0;
+  const optionTitle = def && "Option_Title" in def ? def.Option_Title : "Option";
+
+  useEffect(() => {
+    const isAdv = selected in essentialAbilities.advantages;
+    const abilityDef = isAdv
+      ? essentialAbilities.advantages[selected as keyof typeof essentialAbilities.advantages]
+      : essentialAbilities.disadvantages[selected as keyof typeof essentialAbilities.disadvantages];
+    const choices = abilityDef?.Options?.filter((item) => !String(item).startsWith("------------")) ?? [];
+    setOption(choices[0] !== undefined ? String(choices[0]) : "");
+  }, [selected]);
+
+  const addSelected = () => {
+    if (needsOption && !option) return;
+    patch((current) => spendDp(current, 0, selected, needsOption ? option : 1));
+  };
+
   return (
     <section>
       <h2>Essential Abilities</h2>
@@ -327,9 +358,21 @@ function EssentialStep() {
             </optgroup>
           </select>
         </label>
+        {needsOption ? (
+          <label>
+            {optionTitle}
+            <select value={option} onChange={(event) => setOption(event.target.value)}>
+              {optionChoices.map((choice) => (
+                <option key={choice} value={choice}>
+                  {choice}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
       </div>
       <div className="actions">
-        <button type="button" onClick={() => patch((current) => spendDp(current, 0, selected, 1))}>
+        <button type="button" onClick={addSelected} disabled={needsOption && !option}>
           Add selected
         </button>
       </div>
@@ -607,6 +650,7 @@ function DevelopmentStep() {
   const isMobile = useMediaQuery("(max-width: 600px)");
   const charLevel = characterLevel(character);
   const defaultLevel = charLevel === 0 ? 0 : 1;
+  const [developmentView, setDevelopmentView] = useState<"levels" | "supernatural">("levels");
   const [selectedLevel, setSelectedLevel] = useState(defaultLevel);
   const [spendDpOpen, setSpendDpOpen] = useState(false);
   const [spendDpEdit, setSpendDpEdit] = useState<{
@@ -616,6 +660,7 @@ function DevelopmentStep() {
     className: string;
   } | null>(null);
   const [kiAbilitiesOpen, setKiAbilitiesOpen] = useState(false);
+  const [psychicPointsOpen, setPsychicPointsOpen] = useState(false);
   const [naturalBonusOpen, setNaturalBonusOpen] = useState(false);
   const [changeClassOpen, setChangeClassOpen] = useState(false);
   const levelBlockRefs = useRef(new Map<number, HTMLDivElement>());
@@ -624,10 +669,18 @@ function DevelopmentStep() {
   const levelIndex = remainingIndexForLevel(selectedLevel);
   const mkLeft = mkRemaining(character)[levelIndex] ?? mkRemaining(character).at(-1) ?? 0;
   const className = character.levels[levelIndex]?.class ?? character.levels[0].class;
+  const showSupernaturalTab = canUsePsychicSpending(character) || hasPsychicDevelopment(character);
+  const ppEntries = psychicDevelopmentEntries(character);
 
   useEffect(() => {
     setSelectedLevel((level) => Math.min(level, charLevel));
   }, [charLevel]);
+
+  useEffect(() => {
+    if (!showSupernaturalTab && developmentView === "supernatural") {
+      setDevelopmentView("levels");
+    }
+  }, [showSupernaturalTab, developmentView]);
 
   const selectLevel = (level: number) => {
     setSelectedLevel(level);
@@ -637,6 +690,32 @@ function DevelopmentStep() {
   return (
     <section>
       <h2>Development</h2>
+
+      {showSupernaturalTab ? (
+        <div className="development-step-tabs" role="tablist" aria-label="Development views">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={developmentView === "levels"}
+            className={developmentView === "levels" ? "active" : ""}
+            onClick={() => setDevelopmentView("levels")}
+          >
+            By level
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={developmentView === "supernatural"}
+            className={developmentView === "supernatural" ? "active" : ""}
+            onClick={() => setDevelopmentView("supernatural")}
+          >
+            Supernatural
+          </button>
+        </div>
+      ) : null}
+
+      {developmentView === "levels" ? (
+        <>
       <nav className="level-editor-nav" aria-label="Editing level">
         {charLevel === 0 ? (
           <button
@@ -879,6 +958,53 @@ function DevelopmentStep() {
           </div>
         );
       })}
+        </>
+      ) : (
+        <div className="development-supernatural-panel">
+          <section className="development-pp-summary">
+            <div className="development-pp-header">
+              <div>
+                <h3>Psychic Points</h3>
+                <p className="muted">
+                  Spends use your Psychic Points pool, not DP.<br />
+                  Free Psychic Points: {Math.floor(freePPRemaining(character))} / {Math.floor(totalPsychicPoints(character))}
+                </p>
+              </div>
+              {canUsePsychicSpending(character) ? (
+                <button type="button" className="development-pp-spend-button" onClick={() => setPsychicPointsOpen(true)}>
+                  Spend PP
+                </button>
+              ) : null}
+            </div>
+            {ppEntries.length === 0 ? (
+              <p className="muted">No PP spends yet. Use Spend PP to master disciplines, learn powers, and more.</p>
+            ) : (
+              ppEntries.map((entry) => (
+                <div className="list-item" key={entry.id}>
+                  <span>
+                    {entry.label}
+                    {entry.pp > 0 ? ` — ${entry.pp} PP` : ""}
+                    {entry.removeBlockedReason ? (
+                      <span className="muted"> ({entry.removeBlockedReason})</span>
+                    ) : null}
+                  </span>
+                  {canEditPsychicDevelopment(character) ? (
+                    <button
+                      className="secondary"
+                      type="button"
+                      disabled={!entry.removable}
+                      title={entry.removeBlockedReason}
+                      onClick={() => patch((current) => removePsychicDevelopmentEntry(current, entry.id))}
+                    >
+                      Remove
+                    </button>
+                  ) : null}
+                </div>
+              ))
+            )}
+          </section>
+        </div>
+      )}
 
       <SpendDpDialog
         character={character}
@@ -899,6 +1025,12 @@ function DevelopmentStep() {
         open={kiAbilitiesOpen}
         onClose={() => setKiAbilitiesOpen(false)}
         onLearn={(next) => patch(() => next)}
+      />
+      <PsychicPointsDialog
+        character={character}
+        open={psychicPointsOpen}
+        onClose={() => setPsychicPointsOpen(false)}
+        onApply={(next) => patch(() => next)}
       />
       <ChangeClassDialog
         character={character}

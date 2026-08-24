@@ -1,26 +1,14 @@
 import { advantageCosts, advantages } from "../data/advantages";
 import { classes } from "../data/classes";
 import { disadvantages } from "../data/disadvantages";
-import { psychicDisciplines } from "../data/psychicDisciplines";
 import type { CharacterDocument } from "../schema/character";
 import { cloneCharacter } from "../schema/character";
 import { characteristic } from "./characteristics";
-import { firstDp, hasGift, intersection } from "./helpers";
+import { hasGift, intersection } from "./helpers";
+import { masteredDisciplines } from "./psychicSpending";
 
 export function disciplineAccess(character: CharacterDocument): string[] {
-  const one = character.advantages["Access to One Psychic Discipline"];
-  if (typeof one === "string") return [one];
-  if ("Free Access to Any Psychic Discipline" in character.advantages) {
-    return Object.keys(psychicDisciplines.disciplines);
-  }
-  const dp = firstDp(character);
-  if (typeof dp["Access to a Psychic Discipline"] === "string") {
-    return [dp["Access to a Psychic Discipline"] as string];
-  }
-  if ("Access to Psychic Disciplines" in dp) {
-    return Object.keys(psychicDisciplines.disciplines);
-  }
-  return [];
+  return masteredDisciplines(character);
 }
 
 export function advantageCost(character: CharacterDocument, name: string): number {

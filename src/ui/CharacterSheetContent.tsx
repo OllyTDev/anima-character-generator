@@ -1,7 +1,9 @@
 import { tables } from "../data/tables";
 import { useMemo, useState } from "react";
 import type { DerivedSheet } from "../engine/derived";
+import { FloatingTooltip } from "./FloatingTooltip";
 import { KiPoolManager } from "./KiPoolManager";
+import { PsychicSheetManager } from "./PsychicSheetManager";
 
 type CharacterSheetContentProps = {
   sheet: DerivedSheet;
@@ -100,8 +102,8 @@ export function CharacterSheetContent({ sheet, variant, showTitle = true }: Char
             <Stat label="MA" value={sheet.ma} />
             <Stat label="Zeon Recovery" value={sheet.zeonRecovery} />
             <Stat label="Magic Level" value={sheet.magicLevel} />
-            <Stat label="Magic Projection (Off)" value={sheet.magicProjectionOffense} />
-            <Stat label="Magic Projection (Def)" value={sheet.magicProjectionDefense} />
+            <Stat label="Magic Projection (Attack)" value={sheet.magicProjectionOffense} />
+            <Stat label="Magic Projection (Defense)" value={sheet.magicProjectionDefense} />
           </div>
         </section>
       )}
@@ -122,18 +124,123 @@ export function CharacterSheetContent({ sheet, variant, showTitle = true }: Char
         <section className="sheet-section">
           <h2>Psychic</h2>
           <div className="stat-grid stat-grid--wide">
-            <Stat label="Psychic Points" value={sheet.psychicPoints} />
-            <Stat label="Projection (Off)" value={sheet.psychicProjectionOffense} />
-            <Stat label="Projection (Def)" value={sheet.psychicProjectionDefense} />
+            <Stat label="PP total" value={sheet.psychicPointsTotal} />
+            <Stat label="PP spent" value={sheet.psychicPointsSpent} />
+            <Stat label="PP free" value={sheet.psychicPointsFree} />
+            {full ? (
+              <Stat
+                label="Potential"
+                value={sheet.psychicBasePotential}
+                tooltip={`WP×10 (${sheet.psychicWpPotential}) + global potential (+${sheet.psychicGlobalPotentialBonus})`}
+              />
+            ) : (
+              <Stat label="Global potential" value={`+${sheet.psychicGlobalPotentialBonus}`} />
+            )}
+            <Stat label="Projection (Attack)" value={sheet.psychicProjectionOffense} />
+            <Stat label="Projection (Defense)" value={sheet.psychicProjectionDefense} />
+            <Stat label="Innate slots" value={sheet.psychicInnateSlots} />
           </div>
-          {Object.keys(sheet.psychicPowers).length ? (
-            <ul className="sheet-list">
-              {Object.entries(sheet.psychicPowers).map(([name, potential]) => (
-                <li key={name}>
-                  {name} (potential {potential})
-                </li>
-              ))}
-            </ul>
+          {sheet.psychicDisciplines.length ? (
+            <div className="sheet-subsection">
+              <h4 className="sheet-subtitle">Disciplines</h4>
+              <p>{sheet.psychicDisciplines.join(", ")}</p>
+            </div>
+          ) : null}
+          {Object.keys(sheet.psychicNaturalPowers).length ? (
+            <div className="sheet-subsection">
+              <h4 className="sheet-subtitle">Natural powers</h4>
+              <ul className="sheet-list">
+                {Object.entries(sheet.psychicNaturalPowers).map(([name, potential]) => (
+                  <li key={name}>
+                    {name} (potential {potential})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {sheet.psychicPowers.length ? (
+            <div className="sheet-subsection">
+              <h4 className="sheet-subtitle">Learned powers</h4>
+              <table className="sheet-table sheet-table--psychic-powers">
+                <colgroup>
+                  <col className="sheet-table-col-width--power" />
+                  <col className="sheet-table-col-width--num" />
+                  <col className="sheet-table-col-width--investment" />
+                  <col className="sheet-table-col-width--maintainable" />
+                  {full && sheet.psychicInnateSlots > 0 ? (
+                    <col className="sheet-table-col-width--innate" />
+                  ) : null}
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th className="sheet-table-col--power">Power</th>
+                    <th className="sheet-table-col--num">Potential</th>
+                    <th className="sheet-table-col--investment">Investment</th>
+                    <th className="sheet-table-col--maintainable" title="Maintainable">
+                      <span className="sheet-table-heading-long">Maintainable</span>
+                      <span className="sheet-table-heading-short" aria-hidden="true">
+                        Maint.
+                      </span>
+                    </th>
+                    {full && sheet.psychicInnateSlots > 0 ? (
+                      <th className="sheet-table-col--innate" title="Innate slot">
+                        Innate
+                      </th>
+                    ) : null}
+                  </tr>
+                </thead>
+                <tbody>
+                  {sheet.psychicPowers.map((power) => {
+                    const innateAssigned = sheet.psychicInnateAssignments.includes(power.name);
+                    return (
+                    <tr key={power.name}>
+                      <td className="sheet-table-col--power">
+                        <span className="sheet-power-name">{power.name}</span>
+                        {power.discipline ? (
+                          <span className="sheet-power-meta">{power.discipline}</span>
+                        ) : power.isMatrix ? (
+                          <span className="sheet-power-meta">Matrix</span>
+                        ) : null}
+                      </td>
+                      <td className="sheet-table-col--num">{power.potential}</td>
+                      <td className="sheet-table-col--investment">{power.powerInvestment}</td>
+                      <td className="sheet-table-col--maintainable">{power.maintenance ? "Yes" : "—"}</td>
+                      {full && sheet.psychicInnateSlots > 0 ? (
+                        <td
+                          className="sheet-table-col--innate"
+                          aria-label={innateAssigned ? "Assigned to innate slot" : "Not assigned to innate slot"}
+                        >
+                          {innateAssigned ? (
+                            <span className="sheet-table-check" aria-hidden="true">
+                              ✓
+                            </span>
+                          ) : (
+                            <span className="sheet-table-empty" aria-hidden="true">
+                              —
+                            </span>
+                          )}
+                        </td>
+                      ) : null}
+                    </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+          {full ? <PsychicSheetManager sheet={sheet} /> : null}
+          {!full && sheet.psychicTempSpends.length ? (
+            <details className="sheet-subsection">
+              <summary>Temporary PP spends ({sheet.psychicTempSpends.length})</summary>
+              <ul className="sheet-list">
+                {sheet.psychicTempSpends.map((item) => (
+                  <li key={item.id}>
+                    {item.effect}
+                    {item.power ? ` — ${item.power}` : ""} ({item.pp} PP)
+                  </li>
+                ))}
+              </ul>
+            </details>
           ) : null}
         </section>
       )}
@@ -377,11 +484,17 @@ function KiStat({ name, max, perTurn }: { name: string; max: number; perTurn: nu
   );
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
+function Stat({ label, value, tooltip }: { label: string; value: string | number; tooltip?: string }) {
   return (
     <div className="stat">
       <span>{label}</span>
-      <strong>{value}</strong>
+      {tooltip ? (
+        <FloatingTooltip tooltip={tooltip} className="stat-value-tooltip">
+          <strong>{value}</strong>
+        </FloatingTooltip>
+      ) : (
+        <strong>{value}</strong>
+      )}
     </div>
   );
 }
