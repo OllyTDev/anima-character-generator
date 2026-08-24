@@ -17,12 +17,11 @@ import { hasEditableOption, dpDisplayCategories, dpDisplayCategoryLabel, groupDp
 import { characteristicTotal } from "../engine/characteristics";
 import { characteristicPointLimit } from "../data/generationMethods";
 import { characterLevel, MAX_CHARACTER_LEVEL, xpFromLevel } from "../engine/helpers";
-import { canUsePsychicSpending } from "../engine/magic";
+import { canAccessSupernaturalDevelopment, hasFreePsychicDisciplineAccess } from "../engine/magic";
 import { mkPurchasesForLevel, mkRemaining, removeKiAbility } from "../engine/martialKnowledge";
 import {
   canEditPsychicDevelopment,
   freePPRemaining,
-  hasPsychicDevelopment,
   psychicDevelopmentEntries,
   removePsychicDevelopmentEntry,
   totalPsychicPoints,
@@ -669,7 +668,7 @@ function DevelopmentStep() {
   const levelIndex = remainingIndexForLevel(selectedLevel);
   const mkLeft = mkRemaining(character)[levelIndex] ?? mkRemaining(character).at(-1) ?? 0;
   const className = character.levels[levelIndex]?.class ?? character.levels[0].class;
-  const showSupernaturalTab = canUsePsychicSpending(character) || hasPsychicDevelopment(character);
+  const showSupernaturalTab = canAccessSupernaturalDevelopment(character);
   const ppEntries = psychicDevelopmentEntries(character);
 
   useEffect(() => {
@@ -961,48 +960,50 @@ function DevelopmentStep() {
         </>
       ) : (
         <div className="development-supernatural-panel">
-          <section className="development-pp-summary">
-            <div className="development-pp-header">
-              <div>
-                <h3>Psychic Points</h3>
-                <p className="muted">
-                  Spends use your Psychic Points pool, not DP.<br />
-                  Free Psychic Points: {Math.floor(freePPRemaining(character))} / {Math.floor(totalPsychicPoints(character))}
-                </p>
-              </div>
-              {canUsePsychicSpending(character) ? (
+          {hasFreePsychicDisciplineAccess(character) ? (
+            <section className="development-pp-summary">
+              <div className="development-pp-header">
+                <div>
+                  <h3>Psychic Points</h3>
+                  <p className="muted">
+                    Spends use your Psychic Points pool, not DP.<br />
+                    Free Psychic Points: {Math.floor(freePPRemaining(character))} / {Math.floor(totalPsychicPoints(character))}
+                  </p>
+                </div>
                 <button type="button" className="development-pp-spend-button" onClick={() => setPsychicPointsOpen(true)}>
                   Spend PP
                 </button>
-              ) : null}
-            </div>
-            {ppEntries.length === 0 ? (
-              <p className="muted">No PP spends yet. Use Spend PP to master disciplines, learn powers, and more.</p>
-            ) : (
-              ppEntries.map((entry) => (
-                <div className="list-item" key={entry.id}>
-                  <span>
-                    {entry.label}
-                    {entry.pp > 0 ? ` — ${entry.pp} PP` : ""}
-                    {entry.removeBlockedReason ? (
-                      <span className="muted"> ({entry.removeBlockedReason})</span>
+              </div>
+              {ppEntries.length === 0 ? (
+                <p className="muted">No PP spends yet. Use Spend PP to master disciplines, learn powers, and more.</p>
+              ) : (
+                ppEntries.map((entry) => (
+                  <div className="list-item" key={entry.id}>
+                    <span>
+                      {entry.label}
+                      {entry.pp > 0 ? ` — ${entry.pp} PP` : ""}
+                      {entry.removeBlockedReason ? (
+                        <span className="muted"> ({entry.removeBlockedReason})</span>
+                      ) : null}
+                    </span>
+                    {canEditPsychicDevelopment(character) ? (
+                      <button
+                        className="secondary"
+                        type="button"
+                        disabled={!entry.removable}
+                        title={entry.removeBlockedReason}
+                        onClick={() => patch((current) => removePsychicDevelopmentEntry(current, entry.id))}
+                      >
+                        Remove
+                      </button>
                     ) : null}
-                  </span>
-                  {canEditPsychicDevelopment(character) ? (
-                    <button
-                      className="secondary"
-                      type="button"
-                      disabled={!entry.removable}
-                      title={entry.removeBlockedReason}
-                      onClick={() => patch((current) => removePsychicDevelopmentEntry(current, entry.id))}
-                    >
-                      Remove
-                    </button>
-                  ) : null}
-                </div>
-              ))
-            )}
-          </section>
+                  </div>
+                ))
+              )}
+            </section>
+          ) : (
+            <p className="muted">Magic development will appear here.</p>
+          )}
         </div>
       )}
 

@@ -215,4 +215,14 @@ export function showsPsychicStats(character: CharacterDocument): boolean {
   return usesPsychic(character) || hasPsychicInvestments(character);
 }
 
+/** Whether the character has the advantage that unlocks PP spending in Development. */
+export function hasFreePsychicDisciplineAccess(character: CharacterDocument): boolean {
+  return "Free Access to Any Psychic Discipline" in character.advantages;
+}
+
+/** Whether the Supernatural development tab should appear (psychic PP and/or magic spending). */
+export function canAccessSupernaturalDevelopment(character: CharacterDocument): boolean {
+  return hasFreePsychicDisciplineAccess(character) || hasGift(character);
+}
+
 export { canSpendPsychicPoints as canUsePsychicSpending };

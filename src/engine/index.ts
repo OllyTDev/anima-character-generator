@@ -32,7 +32,18 @@ export {
   spendDp,
 } from "./developmentPoints";
 export { characterLevel, hasGift, levelFromXp, presence, syncLevels, xpFromLevel, MAX_CHARACTER_LEVEL } from "./helpers";
-export { ma, magicLevel, psychicPoints, usesPsychic, usesZeon, zeon, canUsePsychicSpending, naturalPsychicPowers } from "./magic";
+export {
+  ma,
+  magicLevel,
+  psychicPoints,
+  usesPsychic,
+  usesZeon,
+  zeon,
+  canAccessSupernaturalDevelopment,
+  canUsePsychicSpending,
+  hasFreePsychicDisciplineAccess,
+  naturalPsychicPowers,
+} from "./magic";
 export { addKiAbility, hasKiAbility, mkRemaining, mkTotals } from "./martialKnowledge";
 export { initiative, movementValue } from "./movement";
 export { armorType, resistance } from "./resistances";

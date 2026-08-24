@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { addAdvantage } from "./creationPoints";
 import { deriveSheet } from "./derived";
-import { showsPsychicStats } from "./magic";
+import { canAccessSupernaturalDevelopment, hasFreePsychicDisciplineAccess, showsPsychicStats } from "./magic";
 import { addKiAbility, usesKi } from "./martialKnowledge";
 import { createEmptyCharacter } from "../schema/character";
 
@@ -37,5 +37,22 @@ describe("sheet visibility", () => {
   it("shows psychic stats for Free Access", () => {
     const character = addAdvantage(createEmptyCharacter(), "Free Access to Any Psychic Discipline", 2);
     expect(showsPsychicStats(character)).toBe(true);
+  });
+
+  it("shows the supernatural development tab only for Free Access or The Gift", () => {
+    const character = createEmptyCharacter();
+    expect(canAccessSupernaturalDevelopment(character)).toBe(false);
+
+    const oneDiscipline = addAdvantage(character, "Access to One Psychic Discipline", 1, "Telepathy");
+    expect(canAccessSupernaturalDevelopment(oneDiscipline)).toBe(false);
+    expect(hasFreePsychicDisciplineAccess(oneDiscipline)).toBe(false);
+
+    const freeAccess = addAdvantage(createEmptyCharacter(), "Free Access to Any Psychic Discipline", 2);
+    expect(canAccessSupernaturalDevelopment(freeAccess)).toBe(true);
+    expect(hasFreePsychicDisciplineAccess(freeAccess)).toBe(true);
+
+    const gifted = addAdvantage(createEmptyCharacter(), "The Gift", 2, "Standard");
+    expect(canAccessSupernaturalDevelopment(gifted)).toBe(true);
+    expect(hasFreePsychicDisciplineAccess(gifted)).toBe(false);
   });
 });
